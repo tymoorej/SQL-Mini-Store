@@ -98,13 +98,23 @@ def insert_data():
     global connection, cursor
     pass
 
-
+def search_for_keyword(keywords):
+    global connection, cursor
+    keyword_list=keywords.split(" ")
+    results=[]
+    for key in keyword_list:
+        k="%"+key+"%"
+        cursor.execute("SELECT * FROM products p WHERE p.name LIKE ? ",[k])
+        rows=cursor.fetchall()
+        results=results+rows
+    return results
 
 def main():
     setup()
     define_tables()
-    x=getpass()
-    print(x)
+    search_for_keyword('hello goodbye')
+    # x=getpass()
+    # print(x)
 
 if __name__=="__main__":
     main()
