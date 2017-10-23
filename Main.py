@@ -96,7 +96,36 @@ def insert_data():
     # TODO: Insert appropriate data THAT FOLLOWS FOREIGN KEY RESTRAINTS!!!!
     # Dorsa, make data :)
     global connection, cursor
-    pass
+    insertions_cat = [('bak','Bakery'),
+    ('pro','Produce'),
+    ('ele','Electronics'),
+    ('clo','ClothingandApparel'),
+    ('hom','HomeAppliances'),
+    ('toy','Childrenssection'),
+    ('kid','KidsClothingandApparel'),
+    ('car','Autoshops'),]
+    cursor.executemany("	INSERT	INTO	cat	VALUES	(cat,name)	",	insertions_cat);
+
+
+    insertions_products = [('p10','4Lmilk1%','ea','dai'),
+    ('p20','dozenlargeegg','ea','dai'),
+    ('p30','cheddarcheese(270g)','ea','dai'),
+    ('p40','whiteslicedbread','ea','bak'),
+    ('p50','dozendonuts','ea','bak'),
+    ('p60','reddeliciousapple','lb','pro'),
+    ('p70','galaapple','lb','pro'),
+    ('p80','babycarrots(454g)','ea','pro'),
+    ('p90','broccoli','lb','pro'),
+    ('p100','headphones','ea','ele'),
+    ('p110','8gbsdhcCard','ea','ele'),
+    ('p120','aaabatteries(8-pk)','ea','ele'),
+    ('p130','ledhdtv,32-in','ea','ele'),
+    ('p140','v-necksweater','ea','clo'),
+    ('p150','cottonhoodie','ea','clo'),
+    ('p160','coffeemaker','ea','hom'),
+    ('p170','toaster','ea','hom'),
+    ('p180','foodmixer','ea','hom'),]
+    cursor.executemany("	INSERT	INTO	products	VALUES	(pid, name, unit, cat)	",	insertions_products);
 
 def search_for_keyword(keywords):
     global connection, cursor
