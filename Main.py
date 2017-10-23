@@ -10,7 +10,6 @@ def setup():
     cursor.execute(' PRAGMA forteign_keys=ON; ')
     connection.commit()
 
-
 def define_tables():
     global connection, cursor
     drop_tables='''
@@ -91,6 +90,11 @@ def define_tables():
     cursor.executescript(drop_tables)
     cursor.executescript(create_tables)
     connection.commit()
+
+def insert_data():
+    # TODO: Insert appropriate data THAT FOLLOWS FOREIGN KEY RESTRAINTS!!!!
+
+
 
 def main():
     setup()
