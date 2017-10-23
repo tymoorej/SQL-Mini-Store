@@ -145,6 +145,24 @@ def main():
     print(search_for_keyword('oo tt'))
     # x=getpass()
     # print(x)
+    search_for_keyword('hello goodbye')
+    AGENT, CUSTOMER = range(1,3)
+    curMode = 0
+    pastMode = curMode
+    while True:
+        print("LOG-IN SCREEN")
+        user = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n"))
+        if user == CUSTOMER:
+            print(CUSTOMER)
+            mode = CUSTOMER
+        elif user == AGENT:
+            print(AGENT)
+            mode = AGENT
+        else:
+            print("Exit ")
+            break
+        pas = getpass(prompt='Password: ')
+        print(pas)
 
 if __name__=="__main__":
     main()
