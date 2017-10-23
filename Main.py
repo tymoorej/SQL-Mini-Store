@@ -125,7 +125,7 @@ def insert_data():
     ('p160','coffeemaker','ea','hom'),
     ('p170','toaster','ea','hom'),
     ('p180','foodmixer','ea','hom'),]
-    cursor.executemany("INSERT INTO	products VALUES	(?, ?, ?, ?)",	insertions_products);
+    cursor.executemany("INSERT INTO products VALUES	(?, ?, ?, ?)",	insertions_products);
 
 def search_for_keyword(keywords):
     global connection, cursor
