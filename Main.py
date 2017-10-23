@@ -93,6 +93,8 @@ def define_tables():
 
 def insert_data():
     # TODO: Insert appropriate data THAT FOLLOWS FOREIGN KEY RESTRAINTS!!!!
+    # Dorsa, make data :)
+    pass
 
 
 
