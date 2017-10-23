@@ -104,7 +104,7 @@ def insert_data():
     ('toy','Childrenssection'),
     ('kid','KidsClothingandApparel'),
     ('car','Autoshops'),]
-    cursor.executemany("	INSERT	INTO	cat	VALUES	(cat,name)	",	insertions_cat);
+    cursor.executemany("INSERT INTO categories VALUES (?,?)",insertions_cat);
 
 
     insertions_products = [('p10','4Lmilk1%','ea','dai'),
@@ -125,7 +125,7 @@ def insert_data():
     ('p160','coffeemaker','ea','hom'),
     ('p170','toaster','ea','hom'),
     ('p180','foodmixer','ea','hom'),]
-    cursor.executemany("	INSERT	INTO	products	VALUES	(pid, name, unit, cat)	",	insertions_products);
+    cursor.executemany("INSERT INTO	products VALUES	(?, ?, ?, ?)",	insertions_products);
 
 def search_for_keyword(keywords):
     global connection, cursor
@@ -141,7 +141,8 @@ def search_for_keyword(keywords):
 def main():
     setup()
     define_tables()
-    search_for_keyword('hello goodbye')
+    insert_data()
+    print(search_for_keyword('oo'))
     # x=getpass()
     # print(x)
 
