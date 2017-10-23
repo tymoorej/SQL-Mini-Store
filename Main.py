@@ -142,7 +142,7 @@ def main():
     setup()
     define_tables()
     insert_data()
-    print(search_for_keyword('oo'))
+    print(search_for_keyword('oo tt'))
     # x=getpass()
     # print(x)
 
