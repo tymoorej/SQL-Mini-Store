@@ -1,4 +1,5 @@
 import sqlite3
+from getpass import getpass
 
 connection = None
 cursor = None
@@ -102,6 +103,8 @@ def insert_data():
 def main():
     setup()
     define_tables()
+    x=getpass()
+    print(x)
 
 if __name__=="__main__":
     main()
