@@ -164,10 +164,17 @@ class RCustomer(Customer):
 
 def login(userType): #cid, name, address, pwd)
     if userType == 1:
-        option = input("Select corresponding number: \n1.Log In \n2.Sign Up \n")
-        customerLogIn(option)
+        while True:
+            option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n"))
+            if option in [1,2]:
+                break
+        error = customerLogIn(option)
+        if error == -1:
+            sPrint("Invalid Log In Credentials")
     else :  # AGENT Menu
-        agentLogin()
+        error = agentLogin()
+        if error == -1:
+            sPrint("Invalid Log In Credentials")
 
 def agentLogin():
     username = input("Enter a valid ID: ").strip()
@@ -186,6 +193,7 @@ def customerLogIn(option):
         pas = getpass(prompt='Password: ')
         cursor.execute(""" SELECT * FROM customers WHERE cid=? AND pwd=?""", [username, pas])
         rows=cursor.fetchall()
+        print(rows)
         if len(rows) != 1:
             return -1
         else:
@@ -209,6 +217,9 @@ def customerLogIn(option):
             return RCustomer(username, name, address, pas)
 
 def sPrint (message):
+    """
+    Spaced out print
+    """
     print()
     print(message)
     print()
