@@ -127,6 +127,16 @@ def insert_data():
     ('p180','foodmixer','ea','hom'),]
     cursor.executemany("INSERT INTO products VALUES	(?, ?, ?, ?)",	insertions_products);
 
+    # customers(cid, name, address, pwd)
+    insertions_cust = [('1','Bob', '12345 Ave', 'ezpass'),
+    ('2', 'Joe', '13 Street', 'pass'),]
+    cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust);
+
+    # agents(aid, name, pwd)
+    insertions_agent = [('12','James Bond', '007'),
+    ('23', 'Joe Smith', '23'),]
+    cursor.executemany("INSERT INTO agents VALUES (?,?,?)",insertions_agent);
+
 def search_for_keyword(keywords):
     global connection, cursor
     keyword_list=keywords.split(" ")
@@ -138,31 +148,107 @@ def search_for_keyword(keywords):
         results=results+rows
     return results
 
+class Customer(object):
+    def __init__(self, username, password):
+        self.password = password
+        self.username = username
+class Agent(Customer):
+    def __init__(self, username, name, password):
+        super().__init__(username, password)
+        self.name = name
+class RCustomer(Customer):
+    def __init__(self, username, name, address, password):
+        super().__init__(username, password)
+        self.name = name
+        self.address = address
+
+def login(userType): #cid, name, address, pwd)
+    if userType == 1:
+        option = input("Select corresponding number: \n1.Log In \n2.Sign Up \n")
+        customerLogIn(option)
+    else :  # AGENT Menu
+        agentLogin()
+
+def agentLogin():
+    username = input("Enter a valid ID: ").strip()
+    pas = getpass(prompt='Password: ')
+    cursor.execute(""" SELECT * FROM agents WHERE aid=? AND pwd=?""", [username, pas])
+    rows=cursor.fetchall()
+    if len(rows) != 1:
+        return -1
+    else:
+        sPrint("Welcome back" + rows[0][1])
+        return Agent(rows[0][0], rows[0][1], rows[0][2])
+
+def customerLogIn(option):
+    if option == 1:
+        username = input("Enter a valid ID: ").strip()
+        pas = getpass(prompt='Password: ')
+        cursor.execute(""" SELECT * FROM customers WHERE cid=? AND pwd=?""", [username, pas])
+        rows=cursor.fetchall()
+        if len(rows) != 1:
+            return -1
+        else:
+            sPrint("Welcome back " + rows[0][1])
+            return RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
+    else:
+        username = input("Enter a valid ID: ").strip()
+        name = input("Enter your Name: ").strip()
+        address = input("Enter your Address: ").strip()
+        pas = getpass(prompt='Password: ')
+
+        cursor.execute(""" SELECT * FROM customers WHERE cid=? AND pwd=?""", [username, pas])
+        rows=cursor.fetchall()
+        if len(rows) != 0:
+            sPrint("CID and password are not unique")
+            return -1
+        else:
+            insertions_agent = [(username, name, address, pas),]
+            cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_agent);
+            sPrint("Welcome " + name)
+            return RCustomer(username, name, address, pas)
+
+def sPrint (message):
+    print()
+    print(message)
+    print()
+
 def main():
     setup()
     define_tables()
     insert_data()
     print(search_for_keyword('oo tt'))
-    # x=getpass()
-    # print(x)
+
     search_for_keyword('hello goodbye')
-    AGENT, CUSTOMER = range(1,3)
-    curMode = 0
+    MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
+    curMode = MENU
     pastMode = curMode
+    user = None
     while True:
-        print("LOG-IN SCREEN")
-        user = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n"))
-        if user == CUSTOMER:
-            print(CUSTOMER)
-            mode = CUSTOMER
-        elif user == AGENT:
-            print(AGENT)
-            mode = AGENT
+        if curMode == MENU:
+            print("LOG-IN SCREEN")
+            curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n "))
+        if curMode == CUSTOMER:
+            #TODO: Implement the Customer and Agent menus
+            user = login(CUSTOMER)
+            if user == -1:
+                sPrint("Invalid ID and Password Combination. Try Again")
+            else:
+                curMode = MENU
+        elif curMode == AGENT:
+            user = login(AGENT)
+            if user == -1:
+                sPrint("Invalid ID and Password Combination. Try Again")
+            else:
+                curMode = MENU
+        elif curMode == LOGOFF:
+            user = None
+            sPrint("Logging out...")
+            curMode = MENU
         else:
-            print("Exit ")
+            print("Exiting... ")
             break
-        pas = getpass(prompt='Password: ')
-        print(pas)
+
 
 if __name__=="__main__":
     main()
