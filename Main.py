@@ -1,5 +1,6 @@
 import sqlite3
 from getpass import getpass
+from datetime import datetime
 
 connection = None
 cursor = None
@@ -288,15 +289,8 @@ def insert_data():
     (1013,230,datetime(2012, 9, 18), None),]
     cursor.executemany("INSERT INTO deliveries VALUES (?,?,?,?)",insertions_deliveries),
 
-    # customers(cid, name, address, pwd)
-    insertions_cust = [('1','Bob', '12345 Ave', 'ezpass'),
-    ('2', 'Joe', '13 Street', 'pass'),]
-    cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust),
 
-    # agents(aid, name, pwd)
-    insertions_agent = [('12','James Bond', '007'),
-    ('23', 'Joe Smith', '23'),]
-    cursor.executemany("INSERT INTO agents VALUES (?,?,?)",insertions_agent),
+
 
 def search_for_keyword(keywords):
     global connection, cursor
