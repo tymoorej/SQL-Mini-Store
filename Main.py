@@ -478,7 +478,7 @@ def sPrint (message):
     print(message)
     print()
 
-def customerMenu(customer):
+def customerMenu():
     global user
     MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
     curMode = MENU
