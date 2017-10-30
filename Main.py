@@ -387,6 +387,29 @@ def sPrint (message):
     print(message)
     print()
 
+def customerMenu(customer):
+    MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
+    curMode = MENU
+    while curMode != BACK:
+        if curMode == MENU:
+            print("CUSTOMER MENU")
+            curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n 5.Return\n"))
+        if curMode == SEARCH:
+            #TODO: Tymoore add the search function call here
+            pass
+        elif curMode == ORDER:
+            #TODO: Add order function call here
+            pass
+        elif curMode == LIST:
+            #TODO: Dorsa add list function
+        elif curMode == LOGOFF:
+            customer = None
+            curMode = BACK
+        elif curMode != BACK:
+            print("Invalid mode. Try again.")
+    print("Returning to Main Menu...")
+
+
 def loginScreen():
     MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
     curMode = MENU
@@ -395,13 +418,14 @@ def loginScreen():
     while True:
         if curMode == MENU:
             print("LOG-IN SCREEN")
-            curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n "))
+            curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
         if curMode == CUSTOMER:
             #TODO: Implement the Customer and Agent menus
             user = login(CUSTOMER)
             if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
             else:
+                customerMenu(user)
                 curMode = MENU
         elif curMode == AGENT:
             user = login(AGENT)
