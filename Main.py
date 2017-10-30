@@ -287,7 +287,17 @@ def insert_data():
     (1012,220,datetime(2013, 8, 18), None),
     (1013,230,datetime(2012, 9, 18), None),]
     cursor.executemany("INSERT INTO deliveries VALUES (?,?,?,?)",insertions_deliveries),
-    
+
+    # customers(cid, name, address, pwd)
+    insertions_cust = [('1','Bob', '12345 Ave', 'ezpass'),
+    ('2', 'Joe', '13 Street', 'pass'),]
+    cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust),
+
+    # agents(aid, name, pwd)
+    insertions_agent = [('12','James Bond', '007'),
+    ('23', 'Joe Smith', '23'),]
+    cursor.executemany("INSERT INTO agents VALUES (?,?,?)",insertions_agent),
+
 def search_for_keyword(keywords):
     global connection, cursor
     keyword_list=keywords.split(" ")
@@ -298,7 +308,7 @@ def search_for_keyword(keywords):
         rows=cursor.fetchall()
         results=results+rows
     print(results)
-    
+
     return results
 
 class Customer(object):
