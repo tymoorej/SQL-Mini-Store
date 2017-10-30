@@ -540,7 +540,7 @@ def customerMenu(customer):
             print()
             print()
             print()
-            break
+            curMode=BACK
         elif curMode == ORDER:
             #TODO: Add order function call here
             pass
