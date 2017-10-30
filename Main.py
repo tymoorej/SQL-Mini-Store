@@ -146,6 +146,8 @@ def search_for_keyword(keywords):
         cursor.execute("SELECT * FROM products p WHERE p.name LIKE ? ",[k])
         rows=cursor.fetchall()
         results=results+rows
+    print(results)
+    
     return results
 
 class Customer(object):
@@ -224,13 +226,7 @@ def sPrint (message):
     print(message)
     print()
 
-def main():
-    setup()
-    define_tables()
-    insert_data()
-    print(search_for_keyword('oo tt'))
-
-    search_for_keyword('hello goodbye')
+def loginScreen():
     MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
     curMode = MENU
     pastMode = curMode
@@ -259,6 +255,14 @@ def main():
         else:
             print("Exiting... ")
             break
+
+def main():
+    setup()
+    define_tables()
+    insert_data()
+    search_for_keyword('oo tt')
+    search_for_keyword('hello goodbye')
+    # loginScreen()
 
 
 if __name__=="__main__":
