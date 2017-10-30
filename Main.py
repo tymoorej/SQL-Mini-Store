@@ -93,10 +93,10 @@ def define_tables():
     connection.commit()
 
 def insert_data():
-    # TODO: Insert appropriate data THAT FOLLOWS FOREIGN KEY RESTRAINTS!!!!
+        # TODO: Insert appropriate data THAT FOLLOWS FOREIGN KEY RESTRAINTS!!!!
     # Dorsa, make data :)
     global connection, cursor
-    
+
     insertions_cat = [
     ('dai', 'Dairy'),
     ('bak', 'Bakery'),
@@ -229,20 +229,20 @@ def insert_data():
 
 
     insertions_orders = [
-    (100, 'c10', datetime('now', '-3 hours'), 'Athabasca Hall, University of Alberta'),
-    (110, 'c40', datetime('now', '-3 hours'), '9702-162 St NW'),
-    (120, 'c20', datetime('now', '-4 hours'), '9632-107 Ave'),
-    (130, 'c60', datetime('now', '-5 hours'), '31 Jackson Ave'),
-    (140, 'c40', datetime('now', '-8 hours'), '9702-162 St NW'),
-    (150, 'c40', datetime('now', '-2 days'), '9702-162 St NW'),
-    (160, 'c50', datetime('now', '-3 days'), '391 Richfield Rd'),
-    (170, 'c10', datetime('now', '-4 days'), 'Athabasca Hall, University of Alberta'),
-    (180, 'c20', datetime('now', '-4 days'), '9632-107 Ave'),
-    (190, 'c50', datetime('now', '-5 days'), '391 Richfield Rd'),
-    (200, 'c70', datetime('now', '-5 days'), '90 Jonah Ave'),
-    (210, 'c70', datetime('now', '-5 days'), '8012-122 St SW'),
-    (220, 'c80', datetime('now', '-6 days'), '54 Elanore Dr'),
-    (230, 'c30', datetime('now', '-8 days'), '111-222 Ave'),]
+    (100, 'c10', datetime(1223,12,12), 'Athabasca Hall, University of Alberta'),
+    (110, 'c40', datetime(123,12, 14), '9702-162 St NW'),
+    (120, 'c20', datetime(2017, 11, 18), '9632-107 Ave'),
+    (130, 'c60', datetime(2017, 10, 8), '31 Jackson Ave'),
+    (140, 'c40', datetime(2017, 10, 15), '9702-162 St NW'),
+    (150, 'c40', datetime(2017, 9, 27), '9702-162 St NW'),
+    (160, 'c50', datetime(2016, 8, 5), '391 Richfield Rd'),
+    (170, 'c10', datetime(2016, 8, 6), 'Athabasca Hall, University of Alberta'),
+    (180, 'c20', datetime(2015, 9, 21), '9632-107 Ave'),
+    (190, 'c50', datetime(2013, 7, 29), '391 Richfield Rd'),
+    (200, 'c70', datetime(2013, 6, 17), '90 Jonah Ave'),
+    (210, 'c70', datetime(2012, 1, 2), '8012-122 St SW'),
+    (220, 'c80', datetime(2012, 3, 6), '54 Elanore Dr'),
+    (230, 'c30', datetime(2011, 4, 6), '111-222 Ave'),]
     cursor.executemany("INSERT INTO orders VALUES (?,?,?,?)",insertions_orders),
 
     insertions_olines = [
@@ -272,23 +272,22 @@ def insert_data():
 
 
     insertions_deliveries =[
-    (1000,100,datetime(), null),
-    (1001,110,datetime('now', '-3 hours'), datetime('now')),
-    (1002,120,datetime('now','-4 hours'), datetime('now')),
-    (1003,130,datetime(), null),
-    (1004,140,datetime('now', '-5 hours'), datetime('now', '-4 hours')),
-    (1005,150,datetime('now', '-1 day'), null),
-    (1006,160,datetime('now', '-1 day'), null),
-    (1007,170,datetime(), datetime('now', '-3 hours')),
-    (1008,180,datetime(), null),
-    (1009,190,datetime(), datetime('now')),
-    (1010,200,datetime(), null),
-    (1011,210,datetime('now', '-2 days'), datetime('now', '-1 day')),
-    (1012,220,datetime('now', '-2 days'), null),
-    (1013,230,datetime('now', '-8 days'), null),
-    (1013,230,null, null),]
+    (1000,100,datetime(2017, 11, 18), None),
+    (1001,110,datetime(2016, 10, 18), datetime(2016, 11, 18)),
+    (1002,120,datetime(2017, 9, 18), datetime(2017, 10, 18)),
+    (1003,130,datetime(2016, 10, 18), None),
+    (1004,140,datetime(2016, 9, 18), datetime(2016, 12, 18)),
+    (1005,150,datetime(2015, 1, 18), None),
+    (1006,160,datetime(2015, 2, 18), None),
+    (1007,170,datetime(2014, 3, 18), datetime(2015, 1, 18)),
+    (1008,180,datetime(2014, 4, 18), None),
+    (1009,190,datetime(2014, 5, 18), datetime(2014, 12, 18)),
+    (1010,200,datetime(2014, 6, 18), None),
+    (1011,210,datetime(2014, 7, 18), datetime(2014, 10, 18)),
+    (1012,220,datetime(2013, 8, 18), None),
+    (1013,230,datetime(2012, 9, 18), None),]
     cursor.executemany("INSERT INTO deliveries VALUES (?,?,?,?)",insertions_deliveries),
-
+    
 def search_for_keyword(keywords):
     global connection, cursor
     keyword_list=keywords.split(" ")
