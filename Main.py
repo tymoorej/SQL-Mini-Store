@@ -458,7 +458,7 @@ def customerMenu(customer):
         if curMode == MENU:
             print("CUSTOMER MENU")
             curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n 5.Return\n"))
-        if curMode == SEARCH:
+        elif curMode == SEARCH:
             #TODO: Tymoore add the search function call here
             pass
         elif curMode == ORDER:
@@ -466,6 +466,7 @@ def customerMenu(customer):
             pass
         elif curMode == LIST:
             #TODO: Dorsa add list function
+            pass
         elif curMode == LOGOFF:
             customer = None
             curMode = BACK
