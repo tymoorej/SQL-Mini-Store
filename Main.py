@@ -485,7 +485,7 @@ def customerMenu(customer):
                     if(row_index>=len(results) or row_index<0):
                         print("Sorry that row does not exist please try again")
                     else:
-                        print(results[row_index][0])
+                        more_info(results[row_index][0])
                         break
             else:
                 times_moved=0
@@ -533,7 +533,7 @@ def customerMenu(customer):
                     if(row_index>=(minimum-times_moved*5) or row_index<0):
                         print("Sorry that row does not exist please try again")
                     else:
-                        print(results[times_moved*5+row_index][0])
+                        more_info(results[times_moved*5+row_index][0])
                         break
 
 
@@ -553,6 +553,48 @@ def customerMenu(customer):
         elif curMode != BACK:
             print("Invalid mode. Try again.")
     print("Returning to Main Menu...")
+
+def more_info(pid):
+    global connection, cursor
+    cursor.execute('''
+    SELECT p.pid, p.name, p.unit, p.cat
+    FROM products p
+    WHERE p.pid=?
+     '''
+    ,[pid])
+    rows=cursor.fetchall()
+
+    print("\n\n\n" + pid + "'s info can be found below:\n\n")
+    LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15}"
+    print(LAYOUT.format("Product ID","Product Name","Product Unit","Product Category"))
+    print(LAYOUT.format(*rows[0]))
+
+    print("\n\n"+pid + " can be found in the following stores:\n\n")
+    print("In stock:\n\n")
+
+    # TODO: Fix queries- MAYBE????? BARE MINIMUM: ALOT MORE TESTING
+    cursor.execute('''
+    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
+    WHERE c.pid=? AND c.qty>0
+    GROUP BY c.sid, c.qty, c.uprice
+     '''
+    ,[pid])
+    rows=cursor.fetchall()
+    print(rows)
+
+
+    print("\n\nNot in stock:\n\n")
+
+    cursor.execute('''
+    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
+    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
+    GROUP BY c.sid, c.qty, c.uprice
+     '''
+    ,[pid])
+    rows=cursor.fetchall()
+    print(rows)
 
 
 def loginScreen():
@@ -590,8 +632,8 @@ def main():
     setup()
     define_tables()
     insert_data()
-    loginScreen()
-
+    # loginScreen()
+    more_info("p20")
 
 if __name__=="__main__":
     main()
