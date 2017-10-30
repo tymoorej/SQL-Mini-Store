@@ -7,6 +7,24 @@ connection = None
 cursor = None
 user = None
 
+class Customer(object):
+    def __init__(self, username, password):
+        self.password = password
+        self.username = username
+class Agent(Customer):
+    def __init__(self, username, name, password):
+        super().__init__(username, password)
+        self.name = name
+class RCustomer(Customer):
+    def __init__(self, username, name, address, password):
+        super().__init__(username, password)
+        self.name = name
+        self.address = address
+
+class item:
+    def __init__(self, pid, qty, ):
+        pass
+
 def setup():
     global connection, cursor
     connection = sqlite3.connect("./store.db")
@@ -376,20 +394,18 @@ def add_onto_base(results):
 
     return results
 
+#########
 
-class Customer(object):
-    def __init__(self, username, password):
-        self.password = password
-        self.username = username
-class Agent(Customer):
-    def __init__(self, username, name, password):
-        super().__init__(username, password)
-        self.name = name
-class RCustomer(Customer):
-    def __init__(self, username, name, address, password):
-        super().__init__(username, password)
-        self.name = name
-        self.address = address
+def fillBasket():
+    global basket
+    basket['p1'] = 2
+    basket['p2']
+def placeOrder():
+    pass
+
+def logout():
+    user = None
+    basket = dict()
 
 def login(userType): #cid, name, address, pwd)
     global user
@@ -483,7 +499,7 @@ def customerMenu():
             #TODO: Dorsa add list function
             pass
         elif curMode == LOGOFF:
-            user = None
+            logout()
             curMode = BACK
         elif curMode != BACK:
             sPrint("Invalid mode. Try again.")
@@ -507,7 +523,7 @@ def agentMenu():
             #TODO:  add the add function
             pass
         elif curMode == LOGOFF:
-            user = None
+            logout()
             curMode = BACK
         elif curMode != BACK:
             sPrint("Invalid mode. Try again.")
@@ -542,7 +558,7 @@ def loginScreen():
                 agentMenu()
                 curMode = MENU
         elif curMode == LOGOFF:
-            user = None
+            logout()
             sPrint("Logging out...")
             curMode = MENU
         else:
