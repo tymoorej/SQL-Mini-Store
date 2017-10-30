@@ -133,18 +133,18 @@ def insert_data():
 
     insertions_cust = [('1','Bob', '12345 Ave', 'ezpass'),
     ('2', 'Joe', '13 Street', 'pass'),
-    ('c10', 'Jack Abraham', 'CS Dept, University of Alberta'),
-    ('c20', 'Joe Samson', '9632-107 Ave'),
-    ('c30', 'John Connor', '111-222 Ave'),
-    ('c40', 'Sam Tritzen', '9702-162 St NW'),
-    ('c50', 'Bryanna Petrovic', '391 Richfield Rd'),
-    ('c60', 'John Doe', '11 Knottwood Rd'),
-    ('c70', 'Jane Donald', '8012-122 St SW'),
-    ('c80', 'Erin Branch', '54 Elanore Dr'),
-    ('c90', 'Johnathon Doe', '11 Knottwood Rd'),
-    ('c91', 'Donald Donald', '812-122 St SW'),
-    ('c92', 'Donald Trump', '64 Elanore Dr'),]
-    cursor.executemany("INSERT INTO customers VALUES (?,?,?)",insertions_cust),
+    ('c10', 'Jack Abraham', 'CS Dept, University of Alberta', 'flower'),
+    ('c20', 'Joe Samson', '9632-107 Ave','lily'),
+    ('c30', 'John Connor', '111-222 Ave','house'),
+    ('c40', 'Sam Tritzen', '9702-162 St NW','sun'),
+    ('c50', 'Bryanna Petrovic', '391 Richfield Rd','sunrise'),
+    ('c60', 'John Doe', '11 Knottwood Rd','hello'),
+    ('c70', 'Jane Donald', '8012-122 St SW','howareyou'),
+    ('c80', 'Erin Branch', '54 Elanore Dr','fuckthis'),
+    ('c90', 'Johnathon Doe', '11 Knottwood Rd','tyistheworst'),
+    ('c91', 'Donald Donald', '812-122 St SW','heyLuke'),
+    ('c92', 'Donald Trump', '64 Elanore Dr','whatsup'),]
+    cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust),
 
 
     insertion_stores=[
