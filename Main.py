@@ -5,7 +5,6 @@ from datetime import *
 
 connection = None
 cursor = None
-user = None
 
 def setup():
     global connection, cursor
@@ -147,8 +146,6 @@ def insert_data():
     ('c92', 'Donald Trump', '64 Elanore Dr','whatsup'),]
     cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust),
 
-    insertions_agent = [('a1', 'James Bond', '007')]
-    cursor.executemany("INSERT INTO agents VALUES (?,?,?)",insertions_agent),
 
     insertion_stores=[
     (10, 'Canadian Tire', '780-111-2222', 'Edmonton South Common'),
@@ -392,43 +389,34 @@ class RCustomer(Customer):
         self.address = address
 
 def login(userType): #cid, name, address, pwd)
-    global user
     if userType == 1:
-        if user is None:
-            while True:
-                option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n3.Exit \n"))
-                if option in [1,2]:
-                    break
-                elif option == 3:
-                    return -2
-            error = customerLogIn(option)
-            if error is not None:
-                #sPrint("Invalid Log In Credentials")
-                return error
+        while True:
+            option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n"))
+            if option in [1,2]:
+                break
+        error = customerLogIn(option)
+        if error == -1:
+            sPrint("Invalid Log In Credentials")
+            return -1
     else :  # AGENT Menu
         error = agentLogin()
-        if error is not None:
-            #sPrint("Invalid Log In Credentials")
-            return error
-    return user
+        if error == -1:
+            sPrint("Invalid Log In Credentials")
+            return -1
 
 
 def agentLogin():
-    global user
-    username = input("Enter a valid ID. Enter exit to return: ").strip()
-    if username.lower() == 'exit':
-        return -2
+    username = input("Enter a valid ID: ").strip()
     pas = getpass(prompt='Password: ')
     cursor.execute(""" SELECT * FROM agents WHERE aid=? AND pwd=?""", [username, pas])
     rows=cursor.fetchall()
     if len(rows) != 1:
         return -1
     else:
-        sPrint("Welcome back " + rows[0][1])
-        user = Agent(rows[0][0], rows[0][1], rows[0][2])
+        sPrint("Welcome back" + rows[0][1])
+        return Agent(rows[0][0], rows[0][1], rows[0][2])
 
 def customerLogIn(option):
-    global user
     if option == 1:
         username = input("Enter a valid ID: ").strip()
         pas = getpass(prompt='Password: ')
@@ -439,7 +427,7 @@ def customerLogIn(option):
             return -1
         else:
             sPrint("Welcome back " + rows[0][1])
-            user = RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
+            return RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
     else:
         username = input("Enter a valid ID: ").strip()
         name = input("Enter your Name: ").strip()
@@ -455,7 +443,7 @@ def customerLogIn(option):
             insertions_agent = [(username, name, address, pas),]
             cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_agent);
             sPrint("Welcome " + name)
-            user = RCustomer(username, name, address, pas)
+            return RCustomer(username, name, address, pas)
 
 def sPrint (message):
     """
@@ -465,13 +453,12 @@ def sPrint (message):
     print(message)
     print()
 
-def customerMenu():
-    global user
+def customerMenu(customer):
     MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
     curMode = MENU
     while curMode != BACK:
         if curMode == MENU:
-            sPrint("CUSTOMER MENU")
+            print("CUSTOMER MENU")
             curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n 5.Return\n"))
         elif curMode == SEARCH:
             #TODO: Tymoore add the search function call here
@@ -561,63 +548,35 @@ def customerMenu():
             #TODO: Dorsa add list function
             pass
         elif curMode == LOGOFF:
-            user = None
+            customer = None
             curMode = BACK
         elif curMode != BACK:
-            sPrint("Invalid mode. Try again.")
-    sPrint("Returning to Main Menu...")
+            print("Invalid mode. Try again.")
+    print("Returning to Main Menu...")
 
-def agentMenu():
-    global user
-    MENU, SETUP, UPDATE, ADD, LOGOFF, BACK = range(0,6)
-    curMode = MENU
-    while curMode != BACK:
-        if curMode == MENU:
-            sPrint("Agent MENU")
-            curMode = int(input("Select corresponding number: \n 1.Set up delivery\n 2.Update Delivery\n 3.Add to stock\n 4.LogOff\n 5.Return\n"))
-        elif curMode == SETUP:
-            #TODO: add the setup function call here
-            pass
-        elif curMode == UPDATE:
-            #TODO: Add update function call here
-            pass
-        elif curMode == ADD:
-            #TODO:  add the add function
-            pass
-        elif curMode == LOGOFF:
-            user = None
-            curMode = BACK
-        elif curMode != BACK:
-            sPrint("Invalid mode. Try again.")
-    sPrint("Returning to Main Menu...")
 
 def loginScreen():
-    global user
     MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
     curMode = MENU
     pastMode = curMode
+    user = None
     while True:
         if curMode == MENU:
             print("LOG-IN SCREEN")
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
         if curMode == CUSTOMER:
             #TODO: Implement the Customer and Agent menus
-            error = login(CUSTOMER)
-            if error == -1:
+            user = login(CUSTOMER)
+            if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
-            elif error == -2:
-                curMode = MENU
             else:
-                customerMenu()
+                customerMenu(user)
                 curMode = MENU
         elif curMode == AGENT:
-            error = login(AGENT)
-            if error == -1:
+            user = login(AGENT)
+            if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
-            elif error == -2:
-                curMode = MENU
             else:
-                agentMenu()
                 curMode = MENU
         elif curMode == LOGOFF:
             user = None
