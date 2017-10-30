@@ -323,7 +323,6 @@ def get_base(keywords):
 
 def add_onto_base(results):
     global connection, cursor
-    print(results)
     for i in range(len(results)):
         p=results[i][0]
 
