@@ -97,7 +97,7 @@ def insert_data():
     # Dorsa, make data :)
     global connection, cursor
     
-    insertions_cat = [('bak','Bakery'),
+    insertions_cat = [
     ('dai', 'Dairy'),
     ('bak', 'Bakery'),
     ('pro', 'Produce'),
