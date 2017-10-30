@@ -397,10 +397,13 @@ def login(userType): #cid, name, address, pwd)
         error = customerLogIn(option)
         if error == -1:
             sPrint("Invalid Log In Credentials")
+            return -1
     else :  # AGENT Menu
         error = agentLogin()
         if error == -1:
             sPrint("Invalid Log In Credentials")
+            return -1
+
 
 def agentLogin():
     username = input("Enter a valid ID: ").strip()
@@ -510,7 +513,7 @@ def main():
     define_tables()
     insert_data()
     print(search_for_keyword('oo tt'))
-    # loginScreen()
+    loginScreen()
 
 
 if __name__=="__main__":
