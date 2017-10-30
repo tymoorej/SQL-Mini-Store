@@ -131,8 +131,8 @@ def insert_data():
     ('p180','food mixer','ea', 'hom'),]
     cursor.executemany("INSERT INTO products VALUES	(?, ?, ?, ?)",	insertions_products),
 
-    insertions_cust = [('1','Bob', '12345 Ave', 'ezpass'),
-    ('2', 'Joe', '13 Street', 'pass'),
+    insertions_cust = [('c1','Bob', '12345 Ave', 'ezpass'),
+    ('c2', 'Joe', '13 Street', 'pass'),
     ('c10', 'Jack Abraham', 'CS Dept, University of Alberta', 'flower'),
     ('c20', 'Joe Samson', '9632-107 Ave','lily'),
     ('c30', 'John Connor', '111-222 Ave','house'),
@@ -229,8 +229,8 @@ def insert_data():
 
 
     insertions_orders = [
-    (100, 'c10', datetime(1223,12,12), 'Athabasca Hall, University of Alberta'),
-    (110, 'c40', datetime(123,12, 14), '9702-162 St NW'),
+    (100, 'c10', datetime.now(), 'Athabasca Hall, University of Alberta'),
+    (110, 'c40', datetime.now(), '9702-162 St NW'),
     (120, 'c20', datetime(2017, 11, 18), '9632-107 Ave'),
     (130, 'c60', datetime(2017, 10, 8), '31 Jackson Ave'),
     (140, 'c40', datetime(2017, 10, 15), '9702-162 St NW'),
@@ -272,8 +272,8 @@ def insert_data():
 
 
     insertions_deliveries =[
-    (1000,100,datetime(2017, 11, 18), None),
-    (1001,110,datetime(2016, 10, 18), datetime(2016, 11, 18)),
+    (1000,100,datetime.now(), None),
+    (1001,110,datetime.now(), datetime(2016, 11, 18)),
     (1002,120,datetime(2017, 9, 18), datetime(2017, 10, 18)),
     (1003,130,datetime(2016, 10, 18), None),
     (1004,140,datetime(2016, 9, 18), datetime(2016, 12, 18)),
@@ -287,6 +287,11 @@ def insert_data():
     (1012,220,datetime(2013, 8, 18), None),
     (1013,230,datetime(2012, 9, 18), None),]
     cursor.executemany("INSERT INTO deliveries VALUES (?,?,?,?)",insertions_deliveries),
+
+
+def sqlDate(date):
+    datetime()
+
 
 def search_for_keyword(keywords):
     results=get_base(keywords)
