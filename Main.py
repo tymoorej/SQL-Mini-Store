@@ -488,14 +488,16 @@ def loginScreen():
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
         if curMode == CUSTOMER:
             #TODO: Implement the Customer and Agent menus
-            user = login(CUSTOMER)
+            if user is None:
+                user = login(CUSTOMER)
             if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
             else:
                 customerMenu(user)
                 curMode = MENU
         elif curMode == AGENT:
-            user = login(AGENT)
+            if user is None:
+                user = login(AGENT)
             if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
             else:
