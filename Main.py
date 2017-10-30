@@ -5,6 +5,7 @@ from datetime import *
 
 connection = None
 cursor = None
+user = None
 
 class Customer(object):
     def __init__(self, username, password):
@@ -405,34 +406,42 @@ def logout():
     basket = dict()
 
 def login(userType): #cid, name, address, pwd)
+    global user
     if userType == 1:
-        while True:
-            option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n"))
-            if option in [1,2]:
-                break
-        error = customerLogIn(option)
-        if error == -1:
-            sPrint("Invalid Log In Credentials")
-            return -1
+        if user is None:
+            while True:
+                option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n3.Exit \n"))
+                if option in [1,2]:
+                    break
+                elif option == 3:
+                    return -2
+            error = customerLogIn(option)
+            if error is not None:
+                #sPrint("Invalid Log In Credentials")
+                return error
     else :  # AGENT Menu
         error = agentLogin()
-        if error == -1:
-            sPrint("Invalid Log In Credentials")
-            return -1
+        if error is not None:
+            #sPrint("Invalid Log In Credentials")
+            return error
 
 
 def agentLogin():
-    username = input("Enter a valid ID: ").strip()
+    global user
+    username = input("Enter a valid ID. Enter exit to return: ").strip()
+    if username.lower() == 'exit':
+        return -2
     pas = getpass(prompt='Password: ')
     cursor.execute(""" SELECT * FROM agents WHERE aid=? AND pwd=?""", [username, pas])
     rows=cursor.fetchall()
     if len(rows) != 1:
         return -1
     else:
-        sPrint("Welcome back" + rows[0][1])
-        return Agent(rows[0][0], rows[0][1], rows[0][2])
+        sPrint("Welcome back " + rows[0][1])
+        user = Agent(rows[0][0], rows[0][1], rows[0][2])
 
 def customerLogIn(option):
+    global user
     if option == 1:
         username = input("Enter a valid ID: ").strip()
         pas = getpass(prompt='Password: ')
@@ -470,6 +479,7 @@ def sPrint (message):
     print()
 
 def customerMenu(customer):
+    global user
     MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
     curMode = MENU
     while curMode != BACK:
@@ -567,8 +577,8 @@ def customerMenu(customer):
             logout()
             curMode = BACK
         elif curMode != BACK:
-            print("Invalid mode. Try again.")
-    print("Returning to Main Menu...")
+            sPrint("Invalid mode. Try again.")
+    sPrint("Returning to Main Menu...")
 
 def agentMenu():
     global user
@@ -595,27 +605,32 @@ def agentMenu():
     sPrint("Returning to Main Menu...")
 
 def loginScreen():
+    global user
     MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
     curMode = MENU
     pastMode = curMode
-    user = None
     while True:
         if curMode == MENU:
             print("LOG-IN SCREEN")
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
         if curMode == CUSTOMER:
             #TODO: Implement the Customer and Agent menus
-            user = login(CUSTOMER)
-            if user == -1:
+            error = login(CUSTOMER)
+            if error == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
+            elif error == -2:
+                curMode = MENU
             else:
-                customerMenu(user)
+                customerMenu()
                 curMode = MENU
         elif curMode == AGENT:
-            user = login(AGENT)
-            if user == -1:
+            error = login(AGENT)
+            if error == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
+            elif error == -2:
+                curMode = MENU
             else:
+                agentMenu()
                 curMode = MENU
         elif curMode == LOGOFF:
             logout()
