@@ -392,12 +392,12 @@ def add_onto_base(results):
 
     return results
 
-#########
 
 def fillBasket():
     global basket
     basket['p1'] = 2
     basket['p2']
+
 def placeOrder():
     pass
 
@@ -687,7 +687,7 @@ def main():
     define_tables()
     insert_data()
     # loginScreen()
-    more_info("p20")
+    more_info("p120")
 
 if __name__=="__main__":
     main()
