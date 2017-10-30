@@ -110,7 +110,7 @@ def insert_data():
     cursor.executemany("INSERT INTO categories VALUES (?,?)",insertions_cat),
 
 
-    insertions_products = [('p10','4Lmilk1%','ea','dai'),
+    insertions_products = [
     ('p10','4L milk 1%','ea', 'dai'),
     ('p20','dozen large egg','ea', 'dai'),
     ('p30','cheddar cheese (270g)','ea', 'dai'),
@@ -131,7 +131,6 @@ def insert_data():
     ('p180','food mixer','ea', 'hom'),]
     cursor.executemany("INSERT INTO products VALUES	(?, ?, ?, ?)",	insertions_products),
 
-    customers(cid, name, address, pwd)
     insertions_cust = [('1','Bob', '12345 Ave', 'ezpass'),
     ('2', 'Joe', '13 Street', 'pass'),
     ('c10', 'Jack Abraham', 'CS Dept, University of Alberta'),
