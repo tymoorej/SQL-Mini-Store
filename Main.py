@@ -5,7 +5,6 @@ from datetime import *
 
 connection = None
 cursor = None
-user = None
 
 class Customer(object):
     def __init__(self, username, password):
@@ -165,8 +164,6 @@ def insert_data():
     ('c92', 'Donald Trump', '64 Elanore Dr','whatsup'),]
     cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust),
 
-    insertions_agent = [('a1', 'James Bond', '007')]
-    cursor.executemany("INSERT INTO agents VALUES (?,?,?)",insertions_agent),
 
     insertion_stores=[
     (10, 'Canadian Tire', '780-111-2222', 'Edmonton South Common'),
@@ -408,43 +405,34 @@ def logout():
     basket = dict()
 
 def login(userType): #cid, name, address, pwd)
-    global user
     if userType == 1:
-        if user is None:
-            while True:
-                option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n3.Exit \n"))
-                if option in [1,2]:
-                    break
-                elif option == 3:
-                    return -2
-            error = customerLogIn(option)
-            if error is not None:
-                #sPrint("Invalid Log In Credentials")
-                return error
+        while True:
+            option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n"))
+            if option in [1,2]:
+                break
+        error = customerLogIn(option)
+        if error == -1:
+            sPrint("Invalid Log In Credentials")
+            return -1
     else :  # AGENT Menu
         error = agentLogin()
-        if error is not None:
-            #sPrint("Invalid Log In Credentials")
-            return error
-    return user
+        if error == -1:
+            sPrint("Invalid Log In Credentials")
+            return -1
 
 
 def agentLogin():
-    global user
-    username = input("Enter a valid ID. Enter exit to return: ").strip()
-    if username.lower() == 'exit':
-        return -2
+    username = input("Enter a valid ID: ").strip()
     pas = getpass(prompt='Password: ')
     cursor.execute(""" SELECT * FROM agents WHERE aid=? AND pwd=?""", [username, pas])
     rows=cursor.fetchall()
     if len(rows) != 1:
         return -1
     else:
-        sPrint("Welcome back " + rows[0][1])
-        user = Agent(rows[0][0], rows[0][1], rows[0][2])
+        sPrint("Welcome back" + rows[0][1])
+        return Agent(rows[0][0], rows[0][1], rows[0][2])
 
 def customerLogIn(option):
-    global user
     if option == 1:
         username = input("Enter a valid ID: ").strip()
         pas = getpass(prompt='Password: ')
@@ -455,7 +443,7 @@ def customerLogIn(option):
             return -1
         else:
             sPrint("Welcome back " + rows[0][1])
-            user = RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
+            return RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
     else:
         username = input("Enter a valid ID: ").strip()
         name = input("Enter your Name: ").strip()
@@ -471,7 +459,7 @@ def customerLogIn(option):
             insertions_agent = [(username, name, address, pas),]
             cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_agent);
             sPrint("Welcome " + name)
-            user = RCustomer(username, name, address, pas)
+            return RCustomer(username, name, address, pas)
 
 def sPrint (message):
     """
@@ -481,17 +469,94 @@ def sPrint (message):
     print(message)
     print()
 
-def customerMenu():
-    global user
+def customerMenu(customer):
     MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
     curMode = MENU
     while curMode != BACK:
         if curMode == MENU:
-            sPrint("CUSTOMER MENU")
+            print("CUSTOMER MENU")
             curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n 5.Return\n"))
         elif curMode == SEARCH:
             #TODO: Tymoore add the search function call here
-            pass
+            keywords=input("Please enter your space seperated keywords: ")
+            results=search_for_keyword(keywords)
+            print()
+            print()
+            print()
+
+            LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15} {!s:25} {!s:15} {!s:25} {!s:15}"
+
+            if len(results)<5:
+                print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
+                for i in range(len(results)):
+                    print(LAYOUT.format(*results[i]))
+                print()
+                print()
+                print()
+
+
+                while True:
+                    row_index = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+
+                    if(row_index>=len(results) or row_index<0):
+                        print("Sorry that row does not exist please try again")
+                    else:
+                        print(results[row_index][0])
+                        break
+            else:
+                times_moved=0
+                while True:
+                    minimum=min(times_moved*5+5,len(results))
+
+                    if(times_moved*5+5<len(results)):
+                        print()
+                        print()
+                        print()
+                        print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
+                        for i in range(times_moved*5,minimum):
+                            print(LAYOUT.format(*results[i]))
+                        scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                        if scroll==1:
+                            times_moved=times_moved + 1
+                            continue
+                        elif scroll==0:
+                            pass
+                        else:
+                            should_continue=0
+                            while True:
+                                print("Please select either 0 or 1")
+                                scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                                if scroll==0:
+                                    break
+                                elif scroll==1:
+                                    times_moved=times_moved + 1
+                                    should_continue=1
+                                    break
+                            if should_continue:
+                                continue
+
+                    else:
+                        print()
+                        print()
+                        print()
+                        print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
+                        for i in range(times_moved*5,len(results)):
+                            print(LAYOUT.format(*results[i]))
+
+                    row_index = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+
+                    minimum=min(times_moved*5+5,len(results))
+                    if(row_index>=(minimum-times_moved*5) or row_index<0):
+                        print("Sorry that row does not exist please try again")
+                    else:
+                        print(results[times_moved*5+row_index][0])
+                        break
+
+
+            print()
+            print()
+            print()
+            curMode=BACK
         elif curMode == ORDER:
             #TODO: Add order function call here
             pass
@@ -502,8 +567,8 @@ def customerMenu():
             logout()
             curMode = BACK
         elif curMode != BACK:
-            sPrint("Invalid mode. Try again.")
-    sPrint("Returning to Main Menu...")
+            print("Invalid mode. Try again.")
+    print("Returning to Main Menu...")
 
 def agentMenu():
     global user
@@ -530,32 +595,27 @@ def agentMenu():
     sPrint("Returning to Main Menu...")
 
 def loginScreen():
-    global user
     MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
     curMode = MENU
     pastMode = curMode
+    user = None
     while True:
         if curMode == MENU:
             print("LOG-IN SCREEN")
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
         if curMode == CUSTOMER:
             #TODO: Implement the Customer and Agent menus
-            error = login(CUSTOMER)
-            if error == -1:
+            user = login(CUSTOMER)
+            if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
-            elif error == -2:
-                curMode = MENU
             else:
-                customerMenu()
+                customerMenu(user)
                 curMode = MENU
         elif curMode == AGENT:
-            error = login(AGENT)
-            if error == -1:
+            user = login(AGENT)
+            if user == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
-            elif error == -2:
-                curMode = MENU
             else:
-                agentMenu()
                 curMode = MENU
         elif curMode == LOGOFF:
             logout()
@@ -569,7 +629,6 @@ def main():
     setup()
     define_tables()
     insert_data()
-    print(search_for_keyword('oo tt'))
     loginScreen()
 
 
