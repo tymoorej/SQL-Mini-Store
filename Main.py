@@ -1,5 +1,7 @@
 import sqlite3
 from getpass import getpass
+from collections import Counter
+from datetime import *
 
 connection = None
 cursor = None
@@ -93,8 +95,6 @@ def define_tables():
     connection.commit()
 
 def insert_data():
-        # TODO: Insert appropriate data THAT FOLLOWS FOREIGN KEY RESTRAINTS!!!!
-    # Dorsa, make data :)
     global connection, cursor
 
     insertions_cat = [
@@ -192,7 +192,7 @@ def insert_data():
     (40, 'p30', 40, 3.89),
     (40, 'p40', 89, 1.99),
     (40, 'p60', 100, 0.79),
-    (40, 'p120', 35, 12.99),
+    (40, 'p120', 0, 2.99),
     (50, 'p10', 80, 4.75),
     (50, 'p20', 80, 2.40),
     (50, 'p30', 38, 3.89),
@@ -240,7 +240,7 @@ def insert_data():
     (180, 'c20', datetime(2015, 9, 21), '9632-107 Ave'),
     (190, 'c50', datetime(2013, 7, 29), '391 Richfield Rd'),
     (200, 'c70', datetime(2013, 6, 17), '90 Jonah Ave'),
-    (210, 'c70', datetime(2012, 1, 2), '8012-122 St SW'),
+    (210, 'c70', datetime(2017, 10, 23), '8012-122 St SW'),
     (220, 'c80', datetime(2012, 3, 6), '54 Elanore Dr'),
     (230, 'c30', datetime(2011, 4, 6), '111-222 Ave'),]
     cursor.executemany("INSERT INTO orders VALUES (?,?,?,?)",insertions_orders),
@@ -287,19 +287,88 @@ def insert_data():
     (1012,220,datetime(2013, 8, 18), None),
     (1013,230,datetime(2012, 9, 18), None),]
     cursor.executemany("INSERT INTO deliveries VALUES (?,?,?,?)",insertions_deliveries),
-    
+
 def search_for_keyword(keywords):
+    results=get_base(keywords)
+    results=add_onto_base(results)
+
+    return results
+
+def get_base(keywords):
     global connection, cursor
     keyword_list=keywords.split(" ")
     results=[]
     for key in keyword_list:
         k="%"+key+"%"
-        cursor.execute("SELECT * FROM products p WHERE p.name LIKE ? ",[k])
+        cursor.execute('''
+        SELECT p.pid, p.name, p.unit, COUNT(DISTINCT c.sid)
+        FROM products p, carries c
+        WHERE p.pid=c.pid AND p.name LIKE ?
+        GROUP BY p.pid, p.name, p.unit
+         '''
+        ,[k])
         rows=cursor.fetchall()
         results=results+rows
-    print(results)
-    
+
+    results.sort(key=Counter(results).get, reverse=True)
+    list1 = results
+    list2 = sorted(set(list1),key=list1.index)
+    results=list2
     return results
+
+def add_onto_base(results):
+    global connection, cursor
+    print(results)
+    for i in range(len(results)):
+        p=results[i][0]
+
+        cursor.execute('''
+        SELECT COUNT(DISTINCT c.sid)
+        FROM products p, carries c
+        WHERE p.pid=c.pid AND p.pid=? AND c.qty>0
+        GROUP BY p.pid, p.name, p.unit
+         '''
+        ,[p])
+        rows=cursor.fetchall()
+        results[i]=results[i]+(rows[0][0],)
+
+
+
+        cursor.execute('''
+        SELECT MIN(c.uprice)
+        FROM products p, carries c
+        WHERE p.pid=c.pid AND p.pid=?
+         '''
+        ,[p])
+        rows=cursor.fetchall()
+        results[i]=results[i]+(rows[0][0],)
+
+
+
+        cursor.execute('''
+        SELECT MIN(c.uprice)
+        FROM products p, carries c
+        WHERE p.pid=c.pid AND p.pid=? AND c.qty>0
+         '''
+        ,[p])
+        rows=cursor.fetchall()
+        results[i]=results[i]+(rows[0][0],)
+
+
+
+        cursor.execute('''
+        SELECT COUNT(DISTINCT o.oid)
+        FROM products p, orders o, olines ol
+        WHERE p.pid=ol.pid AND o.oid=ol.oid AND p.pid=? AND date(o.odate, '+7 day') >= date('now')
+         '''
+        ,[p])
+        rows=cursor.fetchall()
+        results[i]=results[i]+(rows[0][0],)
+
+
+
+    return results
+
 
 class Customer(object):
     def __init__(self, username, password):
@@ -411,8 +480,7 @@ def main():
     setup()
     define_tables()
     insert_data()
-    search_for_keyword('oo tt')
-    search_for_keyword('hello goodbye')
+    print(search_for_keyword('oo tt'))
     # loginScreen()
 
 
