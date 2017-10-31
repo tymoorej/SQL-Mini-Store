@@ -402,8 +402,10 @@ def placeOrder():
     pass
 
 def logout():
+    global user
     user = None
-    basket = dict()
+    basket = None
+    print("logout", user)
 
 def login(userType): #cid, name, address, pwd)
     global user
@@ -452,7 +454,7 @@ def customerLogIn(option):
             return -1
         else:
             sPrint("Welcome back " + rows[0][1])
-            return RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
+            user = RCustomer(rows[0][0], rows[0][1], rows[0][2], rows[0][3])
     else:
         username = input("Enter a valid ID: ").strip()
         name = input("Enter your Name: ").strip()
@@ -468,7 +470,7 @@ def customerLogIn(option):
             insertions_agent = [(username, name, address, pas),]
             cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_agent);
             sPrint("Welcome " + name)
-            return RCustomer(username, name, address, pas)
+            user = RCustomer(username, name, address, pas)
 
 def sPrint (message):
     """
@@ -567,6 +569,7 @@ def customerMenu():
             print()
             print()
             curMode=BACK
+
         elif curMode == ORDER:
             #TODO: Add order function call here
             pass
@@ -607,7 +610,12 @@ def more_info(pid):
      '''
     ,[pid])
     rows=cursor.fetchall()
-    print(rows)
+    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
+    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
+    if len(rows) != 0:
+        print(LAYOUT.format(*rows[0]))
+    else:
+        print("No Results")
 
 
     print("\n\nNot in stock:\n\n")
@@ -620,7 +628,12 @@ def more_info(pid):
      '''
     ,[pid])
     rows=cursor.fetchall()
-    print(rows)
+    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
+    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
+    if len(rows) != 0:
+        print(LAYOUT.format(*rows[0]))
+    else:
+        print("No Results")
 
 def agentMenu():
     global user
@@ -652,6 +665,7 @@ def loginScreen():
     curMode = MENU
     pastMode = curMode
     while True:
+        print(user)
         if curMode == MENU:
             print("LOG-IN SCREEN")
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
@@ -678,7 +692,8 @@ def loginScreen():
             logout()
             sPrint("Logging out...")
             curMode = MENU
-        else:
+        elif curMode == QUIT:
+            logout()
             print("Exiting... ")
             break
 
@@ -686,8 +701,8 @@ def main():
     setup()
     define_tables()
     insert_data()
-    # loginScreen()
-    more_info("p20")
+    loginScreen()
+    #more_info("p20")
 
 if __name__=="__main__":
     main()
