@@ -6,6 +6,8 @@ from datetime import *
 connection = None
 cursor = None
 user = None
+basket= dict()
+uOrder = 1
 
 class Customer(object):
     def __init__(self, username, password):
@@ -22,8 +24,18 @@ class RCustomer(Customer):
         self.address = address
 
 class item:
-    def __init__(self, pid, qty, ):
-        pass
+    def __init__(self, pid, qty, sid ):
+        self.pid = pid
+        self.qty = qty
+        self.sid = sid
+
+class asket:
+
+    def __init__():
+        this.bucket = set()
+    def addItem(pid, qty, sid):
+        new = item(pid, qty, sid)
+        this.bucket.add(new)
 
 def setup():
     global connection, cursor
@@ -116,6 +128,12 @@ def define_tables():
 def insert_data():
     global connection, cursor
 
+    #agents(aid, name, pwd)
+    insertions_agent = [
+    ('a007', 'James Bond', '007'),]
+    cursor.executemany("INSERT INTO agents VALUES (?,?,?)",insertions_agent),
+
+    # categories(cat, name)
     insertions_cat = [
     ('dai', 'Dairy'),
     ('bak', 'Bakery'),
@@ -128,7 +146,7 @@ def insert_data():
     ('car', 'Autoshops'),]
     cursor.executemany("INSERT INTO categories VALUES (?,?)",insertions_cat),
 
-
+    # products(pid, name, unit, cat)
     insertions_products = [
     ('p10','4L milk 1%','ea', 'dai'),
     ('p20','dozen large egg','ea', 'dai'),
@@ -150,6 +168,7 @@ def insert_data():
     ('p180','food mixer','ea', 'hom'),]
     cursor.executemany("INSERT INTO products VALUES	(?, ?, ?, ?)",	insertions_products),
 
+    # customers(cid, name, address, pwd)
     insertions_cust = [('c1','Bob', '12345 Ave', 'ezpass'),
     ('c2', 'Joe', '13 Street', 'pass'),
     ('c10', 'Jack Abraham', 'CS Dept, University of Alberta', 'flower'),
@@ -165,7 +184,7 @@ def insert_data():
     ('c92', 'Donald Trump', '64 Elanore Dr','whatsup'),]
     cursor.executemany("INSERT INTO customers VALUES (?,?,?,?)",insertions_cust),
 
-
+    # stores(sid, name, phone, address)
     insertion_stores=[
     (10, 'Canadian Tire', '780-111-2222', 'Edmonton South Common'),
     (20, 'Walmart', '780-111-3333', 'Edmonton South Common'),
@@ -182,6 +201,7 @@ def insert_data():
     (130, 'rst', '780-429-1945', 'Oliver Square'),]
     cursor.executemany("INSERT INTO stores VALUES (?,?,?,?)",insertion_stores),
 
+    # carries(sid, pid, qty, uprice)
     insertions_carriers =[
     (10, 'p110', 75, 13.99),
     (10, 'p120', 50, 12.99),
@@ -246,7 +266,7 @@ def insert_data():
     cursor.executemany("INSERT INTO carries VALUES (?,?,?,?)",insertions_carriers),
 
 
-
+    # orders(oid, cid, odate, address)
     insertions_orders = [
     (100, 'c10', datetime.now(), 'Athabasca Hall, University of Alberta'),
     (110, 'c40', datetime.now(), '9702-162 St NW'),
@@ -264,6 +284,7 @@ def insert_data():
     (230, 'c30', datetime(2011, 4, 6), '111-222 Ave'),]
     cursor.executemany("INSERT INTO orders VALUES (?,?,?,?)",insertions_orders),
 
+    # olines(oid, sid, pid, qty, uprice)
     insertions_olines = [
     (100, 20, 'p20', 1, 2.8),
     (110, 30, 'p70', 1, 1.25),
@@ -289,7 +310,7 @@ def insert_data():
     (230, 20, 'p50', 2, 4),]
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",insertions_olines),
 
-
+    # deliveries(trackingno, oid, pickUpTime, dropOffTime)
     insertions_deliveries =[
     (1000,100,datetime.now(), None),
     (1001,110,datetime.now(), datetime(2016, 11, 18)),
@@ -395,17 +416,145 @@ def add_onto_base(results):
 
 def fillBasket():
     global basket
-    basket['p1'] = 2
-    basket['p2']
+    basket[('p10',30,4.60)] = 2
+    basket[('p110',10,13.99)] = 1
+
+def checkBasket():
+    global basket
+    for keys in basket:
+        print(keys,basket[keys])
+
+def addtoBasket(pid, sid, uprice, qty):
+    global basket
+    basket[(pid, sid, uprice)] = qty
+
+def checkOrders():
+    """
+    Just a testing function
+    """
+    cursor.execute(""" SELECT * FROM olines""")
+    ol=cursor.fetchall()
+    cursor.execute(""" SELECT * FROM orders""")
+    o=cursor.fetchall()
+    print(ol)
+    print(o)
 
 def placeOrder():
-    pass
+    global user
+    global basket
+    global uOrder
+    order = []
+    for items in basket:
+        pid, sid, uprice = items
+        qty = basket[items]
+        cursor.execute(""" SELECT qty FROM carries WHERE sid=? AND pid=?""", [sid, pid])
+        realQty=cursor.fetchall()
+        cursor.execute("""SELECT name FROM stores WHERE sid=?""", [sid])
+        sname = cursor.fetchall()
+        cursor.execute("""SELECT name FROM products WHERE pid=?""", [pid])
+        pname = cursor.fetchall()
+        if qty > realQty[0][0]:
+            print("The store " + sname[0][0] + " only has " + str(realQty[0][0]) + " " + pname[0][0] + "s. ")
+            choice = int(input("Would you like to: \n1.Change the quantity? \n 2.Delete product from basket?\n"))
+            if choice == 1:
+                print(qty, realQty[0][0])
+                while qty > realQty[0][0] :
+                    qty = int(input("What is your new quantity?"))
+                cursor.execute("""UPDATE carries
+                                SET qty = qty - ?
+                                WHERE sid=? AND pid=?""", [qty,sid,pid])
+                order.append((uOrder,sid,pid,qty,uprice))
+            elif choice == 2:
+                del basket[(pid,sid,uprice)]
+        else :
+            cursor.execute("""UPDATE carries
+                            SET qty = qty - ?
+                            WHERE sid=? AND pid=?""", [qty,sid,pid])
+            order.append((uOrder,sid,pid,qty,uprice))
+
+    # Creating new orders
+    """orders(oid, cid, odate, address) olines(oid, sid, pid, qty, uprice)"""
+    cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
+    cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
+    uOrder += 1
+
+def csearch() :
+    keywords=input("Please enter your space seperated keywords: ")
+    results=search_for_keyword(keywords)
+    sPrint("")
+
+    LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15} {!s:25} {!s:15} {!s:25} {!s:15}"
+
+    if len(results)<5:
+        print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
+        for i in range(len(results)):
+            print(LAYOUT.format(*results[i]))
+        sPrint("")
+
+
+        while True:
+            row_index = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+
+            if(row_index>=len(results) or row_index<0):
+                print("Sorry that row does not exist please try again")
+            else:
+                more_info(results[row_index][0])
+                break
+    else:
+        times_moved=0
+        while True:
+            minimum=min(times_moved*5+5,len(results))
+
+            if(times_moved*5+5<len(results)):
+                sPrint("")
+                print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
+                for i in range(times_moved*5,minimum):
+                    print(LAYOUT.format(*results[i]))
+                scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                if scroll==1:
+                    times_moved=times_moved + 1
+                    continue
+                elif scroll==0:
+                    pass
+                else:
+                    should_continue=0
+                    while True:
+                        print("Please select either 0 or 1")
+                        scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                        if scroll==0:
+                            break
+                        elif scroll==1:
+                            times_moved=times_moved + 1
+                            should_continue=1
+                            break
+                    if should_continue:
+                        continue
+
+            else:
+                sPrint("")
+                print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
+                for i in range(times_moved*5,len(results)):
+                    print(LAYOUT.format(*results[i]))
+
+            row_index = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+
+            minimum=min(times_moved*5+5,len(results))
+            if(row_index>=(minimum-times_moved*5) or row_index<0):
+                print("Sorry that row does not exist please try again")
+            else:
+                more_info(results[times_moved*5+row_index][0])
+                break
+
+
+    sPrint("")
 
 def logout():
     global user
+    global basket
+    print("Logout:", user)
     user = None
-    basket = None
-    print("logout", user)
+    basket = dict()
+
 
 def login(userType): #cid, name, address, pwd)
     global user
@@ -482,6 +631,7 @@ def sPrint (message):
 
 def customerMenu():
     global user
+    global basket
     MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
     curMode = MENU
     while curMode != BACK:
@@ -490,89 +640,17 @@ def customerMenu():
             curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n 5.Return\n"))
         elif curMode == SEARCH:
             #TODO: Tymoore add the search function call here
-            keywords=input("Please enter your space seperated keywords: ")
-            results=search_for_keyword(keywords)
-            print()
-            print()
-            print()
 
-            LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15} {!s:25} {!s:15} {!s:25} {!s:15}"
-
-            if len(results)<5:
-                print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
-                for i in range(len(results)):
-                    print(LAYOUT.format(*results[i]))
-                print()
-                print()
-                print()
-
-
-                while True:
-                    row_index = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-
-                    if(row_index>=len(results) or row_index<0):
-                        print("Sorry that row does not exist please try again")
-                    else:
-                        more_info(results[row_index][0])
-                        break
-            else:
-                times_moved=0
-                while True:
-                    minimum=min(times_moved*5+5,len(results))
-
-                    if(times_moved*5+5<len(results)):
-                        print()
-                        print()
-                        print()
-                        print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
-                        for i in range(times_moved*5,minimum):
-                            print(LAYOUT.format(*results[i]))
-                        scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
-                        if scroll==1:
-                            times_moved=times_moved + 1
-                            continue
-                        elif scroll==0:
-                            pass
-                        else:
-                            should_continue=0
-                            while True:
-                                print("Please select either 0 or 1")
-                                scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
-                                if scroll==0:
-                                    break
-                                elif scroll==1:
-                                    times_moved=times_moved + 1
-                                    should_continue=1
-                                    break
-                            if should_continue:
-                                continue
-
-                    else:
-                        print()
-                        print()
-                        print()
-                        print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
-                        for i in range(times_moved*5,len(results)):
-                            print(LAYOUT.format(*results[i]))
-
-                    row_index = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-
-                    minimum=min(times_moved*5+5,len(results))
-                    if(row_index>=(minimum-times_moved*5) or row_index<0):
-                        print("Sorry that row does not exist please try again")
-                    else:
-                        more_info(results[times_moved*5+row_index][0])
-                        break
-
-
-            print()
-            print()
-            print()
+            csearch()
             curMode=BACK
 
         elif curMode == ORDER:
             #TODO: Add order function call here
-            pass
+            if len(basket) :
+                placeOrder()
+            else:
+                print("Nothing to order...")
+            curMode=BACK
         elif curMode == LIST:
             #TODO: Dorsa add list function
             pass
@@ -617,6 +695,13 @@ def more_info(pid):
     else:
         print("No Results")
 
+    order = input("Would you like to order any of these options? [y/n]")
+    if order == 'y':
+        choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+        while choice > len(rows):
+            choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+        qty= int(input("How many do you want? (note min is 1)"))
+        addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
 
     print("\n\nNot in stock:\n\n")
 
@@ -698,11 +783,12 @@ def loginScreen():
             break
 
 def main():
+    global user
     setup()
     define_tables()
     insert_data()
-    # loginScreen()
-    more_info("p120")
+    loginScreen()
+    #more_info("p120")
 
 if __name__=="__main__":
     main()
