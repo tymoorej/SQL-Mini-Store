@@ -8,6 +8,7 @@ cursor = None
 user = None
 basket= dict()
 uOrder = 1
+uDelivery = 1
 
 class Customer(object):
     def __init__(self, username, password):
@@ -36,6 +37,8 @@ class asket:
     def addItem(pid, qty, sid):
         new = item(pid, qty, sid)
         this.bucket.add(new)
+
+#### MARK: Setup Functions
 
 def setup():
     global connection, cursor
@@ -328,11 +331,7 @@ def insert_data():
     (1013,230,datetime(2012, 9, 18), None),]
     cursor.executemany("INSERT INTO deliveries VALUES (?,?,?,?)",insertions_deliveries),
 
-
-def sqlDate(date):
-    datetime()
-
-
+#### MARK: Search functions
 def search_for_keyword(keywords):
     results=get_base(keywords)
     results=add_onto_base(results)
@@ -413,72 +412,10 @@ def add_onto_base(results):
 
     return results
 
-
-def fillBasket():
-    global basket
-    basket[('p10',30,4.60)] = 2
-    basket[('p110',10,13.99)] = 1
-
-def checkBasket():
-    global basket
-    for keys in basket:
-        print(keys,basket[keys])
-
-def addtoBasket(pid, sid, uprice, qty):
-    global basket
-    basket[(pid, sid, uprice)] = qty
-
-def checkOrders():
-    """
-    Just a testing function
-    """
-    cursor.execute(""" SELECT * FROM olines""")
-    ol=cursor.fetchall()
-    cursor.execute(""" SELECT * FROM orders""")
-    o=cursor.fetchall()
-    print(ol)
-    print(o)
-
-def placeOrder():
-    global user
-    global basket
-    global uOrder
-    order = []
-    for items in basket:
-        pid, sid, uprice = items
-        qty = basket[items]
-        cursor.execute(""" SELECT qty FROM carries WHERE sid=? AND pid=?""", [sid, pid])
-        realQty=cursor.fetchall()
-        cursor.execute("""SELECT name FROM stores WHERE sid=?""", [sid])
-        sname = cursor.fetchall()
-        cursor.execute("""SELECT name FROM products WHERE pid=?""", [pid])
-        pname = cursor.fetchall()
-        if qty > realQty[0][0]:
-            print("The store " + sname[0][0] + " only has " + str(realQty[0][0]) + " " + pname[0][0] + "s. ")
-            choice = int(input("Would you like to: \n1.Change the quantity? \n 2.Delete product from basket?\n"))
-            if choice == 1:
-                print(qty, realQty[0][0])
-                while qty > realQty[0][0] :
-                    qty = int(input("What is your new quantity?"))
-                cursor.execute("""UPDATE carries
-                                SET qty = qty - ?
-                                WHERE sid=? AND pid=?""", [qty,sid,pid])
-                order.append((uOrder,sid,pid,qty,uprice))
-            elif choice == 2:
-                del basket[(pid,sid,uprice)]
-        else :
-            cursor.execute("""UPDATE carries
-                            SET qty = qty - ?
-                            WHERE sid=? AND pid=?""", [qty,sid,pid])
-            order.append((uOrder,sid,pid,qty,uprice))
-
-    # Creating new orders
-    """orders(oid, cid, odate, address) olines(oid, sid, pid, qty, uprice)"""
-    cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
-    cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
-    uOrder += 1
-
 def csearch() :
+    """
+    Tymoore's search function
+    """
     keywords=input("Please enter your space seperated keywords: ")
     results=search_for_keyword(keywords)
     sPrint("")
@@ -548,10 +485,215 @@ def csearch() :
 
     sPrint("")
 
+def more_info(pid):
+    global connection, cursor
+    cursor.execute('''
+    SELECT p.pid, p.name, p.unit, p.cat
+    FROM products p
+    WHERE p.pid=?
+     '''
+    ,[pid])
+    rows=cursor.fetchall()
+
+    print("\n\n\n" + pid + "'s info can be found below:\n\n")
+    LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15}"
+    print(LAYOUT.format("Product ID","Product Name","Product Unit","Product Category"))
+    print(LAYOUT.format(*rows[0]))
+
+    print("\n\n"+pid + " can be found in the following stores:\n\n")
+    print("In stock:\n\n")
+
+    # TODO: Fix queries- MAYBE????? BARE MINIMUM: ALOT MORE TESTING
+    cursor.execute('''
+    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
+    WHERE c.pid=? AND c.qty>0
+    GROUP BY c.sid, c.qty, c.uprice
+     '''
+    ,[pid])
+    rows=cursor.fetchall()
+    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
+    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
+    if len(rows) != 0:
+        print(LAYOUT.format(*rows[0]))
+    else:
+        print("No Results\n")
+
+    order = input("Would you like to order any of these options? [y/n]").lower()
+    if order == 'y':
+        choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+        while choice > len(rows):
+            choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+        qty= int(input("How many do you want? (note min is 1)"))
+        addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
+
+    print("\n\nNot in stock:\n\n")
+
+    cursor.execute('''
+    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
+    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
+    GROUP BY c.sid, c.qty, c.uprice
+     '''
+    ,[pid])
+    rows=cursor.fetchall()
+    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
+    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
+    if len(rows) != 0:
+        print(LAYOUT.format(*rows[0]))
+    else:
+        print("No Results")
+
+#### MARK: Order functions
+def fillBasket():
+    global basket
+    basket[('p10',30,4.60)] = 2
+    basket[('p110',10,13.99)] = 1
+
+def checkBasket():
+    global basket
+    for keys in basket:
+        print(keys,basket[keys])
+
+def addtoBasket(pid, sid, uprice, qty):
+    global basket
+    basket[(pid, sid, uprice)] = qty
+
+def checkOrders():
+    """
+    Just a testing function
+    """
+    cursor.execute(""" SELECT * FROM olines""")
+    ol=cursor.fetchall()
+    cursor.execute(""" SELECT * FROM orders""")
+    o=cursor.fetchall()
+    print(ol)
+    print(o)
+
+def placeOrder():
+    global user
+    global basket
+    global uOrder
+    cursor.execute(""" SELECT max(oid) FROM orders """)
+    uOrder=cursor.fetchall()[0][0] + 10
+    order = []
+    for items in basket:
+        pid, sid, uprice = items
+        qty = basket[items]
+        cursor.execute(""" SELECT qty FROM carries WHERE sid=? AND pid=?""", [sid, pid])
+        realQty=cursor.fetchall()
+        cursor.execute("""SELECT name FROM stores WHERE sid=?""", [sid])
+        sname = cursor.fetchall()
+        cursor.execute("""SELECT name FROM products WHERE pid=?""", [pid])
+        pname = cursor.fetchall()
+        if qty > realQty[0][0]:
+            print("The store " + sname[0][0] + " only has " + str(realQty[0][0]) + " " + pname[0][0] + "s. ")
+            choice = int(input("Would you like to: \n1.Change the quantity? \n 2.Delete product from basket?\n"))
+            if choice == 1:
+                print(qty, realQty[0][0])
+                while qty > realQty[0][0] :
+                    qty = int(input("What is your new quantity?"))
+                cursor.execute("""UPDATE carries
+                                SET qty = qty - ?
+                                WHERE sid=? AND pid=?""", [qty,sid,pid])
+                order.append((uOrder,sid,pid,qty,uprice))
+            elif choice == 2:
+                del basket[(pid,sid,uprice)]
+        else :
+            cursor.execute("""UPDATE carries
+                            SET qty = qty - ?
+                            WHERE sid=? AND pid=?""", [qty,sid,pid])
+            order.append((uOrder,sid,pid,qty,uprice))
+
+    # Creating new orders
+    """orders(oid, cid, odate, address) olines(oid, sid, pid, qty, uprice)"""
+    cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
+    cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
+
+#### MARK: Agent options
+# orders(oid, cid, odate, address)
+
+def checkDeliveries():
+    """
+    Just a testing function
+    """
+    cursor.execute(""" SELECT * FROM deliveries""")
+    d=cursor.fetchall()
+    print(d)
+
+def setupDeliveries():
+    global user
+    global uDelivery
+    cursor.execute(""" SELECT max(trackingNo) FROM deliveries """)
+    uDelivery=cursor.fetchall()[0][0] + 1
+    deliveries = []
+
+    cursor.execute(""" SELECT * FROM orders""")
+    ordersList = cursor.fetchall()
+    times_moved=0
+    while True:
+        minimum=min(times_moved*5+5,len(ordersList))
+
+        if(times_moved*5+5<len(ordersList)):
+            sPrint("")
+            LAYOUT = "{!s:10} {!s:12} {!s:30} {!s:20}"
+            print(LAYOUT.format("Order ID","Customer ID","Order Date","Address"))
+            for i in range(times_moved*5,minimum):
+                print(LAYOUT.format(*ordersList[i]))
+            scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+            if scroll==1:
+                times_moved=times_moved + 1
+                continue
+            elif scroll==0:
+                pass
+            else:
+                should_continue=0
+                while True:
+                    print("Please select either 0 or 1")
+                    scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                    if scroll==0:
+                        break
+                    elif scroll==1:
+                        times_moved=times_moved + 1
+                        should_continue=1
+                        break
+                if should_continue:
+                    continue
+
+        else:
+            sPrint("")
+            print(LAYOUT.format("Order ID","Customer ID","Order Date","Address"))
+            for i in range(times_moved*5,len(ordersList)):
+                print(LAYOUT.format(*ordersList[i]))
+        anotherOne = input("Do you want to add an order to your a delivery? [y/n]: ").lower()
+
+        while anotherOne == 'y':
+            row_index = int(input("Select the number of the row you would like to add to the delivery (NOTE row starts at 0): "))
+            minimum=min(times_moved*5+5,len(ordersList))
+            if(row_index>=(minimum-times_moved*5) or row_index<0):
+                print("Sorry that row does not exist please try again")
+            else:
+                pckup = input("Add a pickup time (in format 'YYYY MM DD'). Type 'no' for no date: ")
+                try:
+                    pckup = datetime.strptime(pckup, '%Y %m %d')
+                except ValueError:
+                    pckup = None
+                deliveries.append((ordersList[times_moved*5+row_index][0],pckup)) # datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
+                anotherOne = input("Do you want to add another order to your a delivery? [y/n]: ").lower()
+
+        for deliv in deliveries:
+            cursor.execute("INSERT INTO deliveries VALUES (?,?,?,?)",[uDelivery,deliv[0],deliv[1], None]),
+        break
+
+
+
+
+
+#### MARK: Menu Functions
 def logout():
     global user
     global basket
-    print("Logout:", user)
+    print("Logout:", user.username)
     user = None
     basket = dict()
 
@@ -642,12 +784,13 @@ def customerMenu():
             #TODO: Tymoore add the search function call here
 
             csearch()
-            curMode=BACK
+            curMode=MENU
 
         elif curMode == ORDER:
             #TODO: Add order function call here
             if len(basket) :
                 placeOrder()
+                basket = dict()
             else:
                 print("Nothing to order...")
             curMode=BACK
@@ -661,64 +804,6 @@ def customerMenu():
             sPrint("Invalid mode. Try again.")
     sPrint("Returning to Main Menu...")
 
-def more_info(pid):
-    global connection, cursor
-    cursor.execute('''
-    SELECT p.pid, p.name, p.unit, p.cat
-    FROM products p
-    WHERE p.pid=?
-     '''
-    ,[pid])
-    rows=cursor.fetchall()
-
-    print("\n\n\n" + pid + "'s info can be found below:\n\n")
-    LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15}"
-    print(LAYOUT.format("Product ID","Product Name","Product Unit","Product Category"))
-    print(LAYOUT.format(*rows[0]))
-
-    print("\n\n"+pid + " can be found in the following stores:\n\n")
-    print("In stock:\n\n")
-
-    # TODO: Fix queries- MAYBE????? BARE MINIMUM: ALOT MORE TESTING
-    cursor.execute('''
-    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
-    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
-    WHERE c.pid=? AND c.qty>0
-    GROUP BY c.sid, c.qty, c.uprice
-     '''
-    ,[pid])
-    rows=cursor.fetchall()
-    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
-    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
-    if len(rows) != 0:
-        print(LAYOUT.format(*rows[0]))
-    else:
-        print("No Results")
-
-    order = input("Would you like to order any of these options? [y/n]")
-    if order == 'y':
-        choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-        while choice > len(rows):
-            choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-        qty= int(input("How many do you want? (note min is 1)"))
-        addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
-
-    print("\n\nNot in stock:\n\n")
-
-    cursor.execute('''
-    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
-    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
-    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
-    GROUP BY c.sid, c.qty, c.uprice
-     '''
-    ,[pid])
-    rows=cursor.fetchall()
-    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
-    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
-    if len(rows) != 0:
-        print(LAYOUT.format(*rows[0]))
-    else:
-        print("No Results")
 
 def agentMenu():
     global user
@@ -730,13 +815,14 @@ def agentMenu():
             curMode = int(input("Select corresponding number: \n 1.Set up delivery\n 2.Update Delivery\n 3.Add to stock\n 4.LogOff\n 5.Return\n"))
         elif curMode == SETUP:
             #TODO: add the setup function call here
-            pass
+            setupDeliveries()
+            curMode = MENU
         elif curMode == UPDATE:
             #TODO: Add update function call here
-            pass
+            curMode = MENU
         elif curMode == ADD:
             #TODO:  add the add function
-            pass
+            curMode = MENU
         elif curMode == LOGOFF:
             logout()
             curMode = BACK
@@ -750,7 +836,10 @@ def loginScreen():
     curMode = MENU
     pastMode = curMode
     while True:
-        print(user)
+        if user:
+            print("Current User:", user.username)
+        else:
+            print("Current User:", user)
         if curMode == MENU:
             print("LOG-IN SCREEN")
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
