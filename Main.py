@@ -570,6 +570,11 @@ def checkOrders():
     print(ol)
     print(o)
 
+def checkCarries():
+    cursor.execute(""" SELECT * FROM carries""")
+    c=cursor.fetchall()
+    print(c)
+
 def placeOrder():
     global user
     global basket
@@ -685,7 +690,71 @@ def setupDeliveries():
             cursor.execute("INSERT INTO deliveries VALUES (?,?,?,?)",[uDelivery,deliv[0],deliv[1], None]),
         break
 
+def addtoStock():
+    global user
+    cursor.execute(""" SELECT * FROM carries """)
+    prodList = cursor.fetchall()
+    times_moved=0
+    while True:
+        minimum=min(times_moved*5+5,len(prodList))
+        # carries(sid, pid, qty, uprice)
+        if(times_moved*5+5<len(prodList)):
+            sPrint("")
+            LAYOUT = "{!s:10} {!s:12} {!s:10} {!s:12}"
+            print(LAYOUT.format("Store ID","Product ID","Quantity","Unit Price"))
+            for i in range(times_moved*5,minimum):
+                print(LAYOUT.format(*prodList[i]))
+            scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+            if scroll==1:
+                times_moved=times_moved + 1
+                continue
+            elif scroll==0:
+                pass
+            else:
+                should_continue=0
+                while True:
+                    print("Please select either 0 or 1")
+                    scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                    if scroll==0:
+                        break
+                    elif scroll==1:
+                        times_moved=times_moved + 1
+                        should_continue=1
+                        break
+                if should_continue:
+                    continue
 
+        else:
+            sPrint("")
+            print(LAYOUT.format("Store ID","Product ID","Quantity","Unit Price"))
+            for i in range(times_moved*5,len(prodList)):
+                print(LAYOUT.format(*prodList[i]))
+        option = int(input("Do you want to:\n 1.Add products to store?\n 2.Change the unit price? \n "))
+
+        while option == 1:
+            row_index = int(input("Select the number of the row you would like to add products to (NOTE row starts at 0): "))
+            minimum=min(times_moved*5+5,len(prodList))
+            if(row_index>=(minimum-times_moved*5) or row_index<0):
+                print("Sorry that row does not exist please try again")
+            else:
+                addQty = int(input("How many should be added?"))
+                cursor.execute("""UPDATE carries
+                                SET qty = qty + ?
+                                WHERE sid=? AND pid=?""", [addQty,prodList[times_moved*5+row_index][0],prodList[times_moved*5+row_index][1]])
+                option = int(input("Do you want to make more changes?\n 1.Yes\n 2.No\n "))
+        option = int(input("Do you want to change the unit price of a product?\n 1.No\n 2.Yes\n"))
+        while option == 2:
+            row_index = int(input("Select the number of the row you would like to change the unit price for (NOTE row starts at 0): "))
+            minimum=min(times_moved*5+5,len(prodList))
+            if(row_index>=(minimum-times_moved*5) or row_index<0):
+                print("Sorry that row does not exist please try again")
+            else:
+                addPrice = float(input("What should the new unit price be?"))
+                cursor.execute("""UPDATE carries
+                                SET uprice = ?
+                                WHERE sid=? AND pid=?""" , [addPrice,prodList[times_moved*5+row_index][0],prodList[times_moved*5+row_index][1]])
+                option = int(input("Do you want to make more changes?\n 1.No\n 2.Yes\n "))
+        break
 
 
 
@@ -822,6 +891,8 @@ def agentMenu():
             curMode = MENU
         elif curMode == ADD:
             #TODO:  add the add function
+            addtoStock()
+            checkCarries()
             curMode = MENU
         elif curMode == LOGOFF:
             logout()
