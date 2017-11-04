@@ -530,12 +530,13 @@ def more_info(pid):
     else:
         print("No Results\n")
 
-    order = input("Would you like to order any of these options? [y/n]").lower()
+    order = input("\n\nWould you like to order any of these options? [y/n] ").lower()
     if order == 'y':
         choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-        while choice > len(rows):
+        while choice >= len(rows) or choice < 0:
+            print("Please choose a valid row")
             choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-        qty= int(input("How many do you want? (note min is 1)"))
+        qty= int(input("How many do you want? (note min is 1) "))
         addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
 
     print("\n\nNot in stock:\n\n")
@@ -549,8 +550,8 @@ def more_info(pid):
     ,[pid])
     rows=cursor.fetchall()
     LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
-    print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
     if len(rows) != 0:
+        print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
         print(LAYOUT.format(*rows[0]))
     else:
         print("No Results")
