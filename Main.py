@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 from getpass import getpass
 from collections import Counter
 from datetime import *
@@ -41,6 +42,16 @@ class asket:
 #### MARK: Setup Functions
 
 def setup():
+    global connection, cursor
+    db = sys.argv[1]
+    if db is None:
+        return -1
+    connection = sqlite3.connect("./" + db)
+    cursor = connection.cursor()
+    cursor.execute(' PRAGMA forteign_keys=ON; ')
+    connection.commit()
+
+def setup_test():
     global connection, cursor
     connection = sqlite3.connect("./store.db")
     cursor = connection.cursor()
@@ -695,66 +706,30 @@ def addtoStock():
     cursor.execute(""" SELECT * FROM carries """)
     prodList = cursor.fetchall()
     times_moved=0
-    while True:
-        minimum=min(times_moved*5+5,len(prodList))
-        # carries(sid, pid, qty, uprice)
-        if(times_moved*5+5<len(prodList)):
-            sPrint("")
-            LAYOUT = "{!s:10} {!s:12} {!s:10} {!s:12}"
-            print(LAYOUT.format("Store ID","Product ID","Quantity","Unit Price"))
-            for i in range(times_moved*5,minimum):
-                print(LAYOUT.format(*prodList[i]))
-            scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
-            if scroll==1:
-                times_moved=times_moved + 1
-                continue
-            elif scroll==0:
-                pass
-            else:
-                should_continue=0
-                while True:
-                    print("Please select either 0 or 1")
-                    scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
-                    if scroll==0:
-                        break
-                    elif scroll==1:
-                        times_moved=times_moved + 1
-                        should_continue=1
-                        break
-                if should_continue:
-                    continue
-
-        else:
-            sPrint("")
-            print(LAYOUT.format("Store ID","Product ID","Quantity","Unit Price"))
-            for i in range(times_moved*5,len(prodList)):
-                print(LAYOUT.format(*prodList[i]))
-        option = int(input("Do you want to:\n 1.Add products to store?\n 2.Change the unit price? \n "))
-
-        while option == 1:
-            row_index = int(input("Select the number of the row you would like to add products to (NOTE row starts at 0): "))
-            minimum=min(times_moved*5+5,len(prodList))
-            if(row_index>=(minimum-times_moved*5) or row_index<0):
-                print("Sorry that row does not exist please try again")
-            else:
-                addQty = int(input("How many should be added?"))
+    pid = input("Enter the pid of the product you want to edit: ").strip()
+    sid = int(input("Enter the sid of the product you want to edit: "))
+    cursor.execute(""" SELECT * FROM carries WHERE sid=? AND pid=?""", [sid, pid])
+    rows=cursor.fetchall()
+    if len(rows) != 1:
+        print("Invalid PID SID combination...")
+        return
+    else:
+        while True :
+            option = int(input("Select the corresponding for your chosen option:\n 1.Add to the Stock\n 2.Change the Unit Price\n 3.Exit\n"))
+            if option == 1:
+                addQty = int(input("How many should be added? "))
                 cursor.execute("""UPDATE carries
                                 SET qty = qty + ?
-                                WHERE sid=? AND pid=?""", [addQty,prodList[times_moved*5+row_index][0],prodList[times_moved*5+row_index][1]])
-                option = int(input("Do you want to make more changes?\n 1.Yes\n 2.No\n "))
-        option = int(input("Do you want to change the unit price of a product?\n 1.No\n 2.Yes\n"))
-        while option == 2:
-            row_index = int(input("Select the number of the row you would like to change the unit price for (NOTE row starts at 0): "))
-            minimum=min(times_moved*5+5,len(prodList))
-            if(row_index>=(minimum-times_moved*5) or row_index<0):
-                print("Sorry that row does not exist please try again")
-            else:
-                addPrice = float(input("What should the new unit price be?"))
+                                WHERE sid=? AND pid=?""", [addQty,sid,pid])
+            elif option == 2:
+                addPrice = float(input("What should the new unit price be? "))
                 cursor.execute("""UPDATE carries
                                 SET uprice = ?
-                                WHERE sid=? AND pid=?""" , [addPrice,prodList[times_moved*5+row_index][0],prodList[times_moved*5+row_index][1]])
-                option = int(input("Do you want to make more changes?\n 1.No\n 2.Yes\n "))
-        break
+                                WHERE sid=? AND pid=?""" , [addPrice,sid,pid])
+            elif option == 3:
+                checkCarries()
+                break
+
 
 
 
@@ -762,7 +737,8 @@ def addtoStock():
 def logout():
     global user
     global basket
-    print("Logout:", user.username)
+    if user:
+        print("Logout:", user.username)
     user = None
     basket = dict()
 
@@ -944,7 +920,7 @@ def loginScreen():
 
 def main():
     global user
-    setup()
+    setup_test() #setup()
     define_tables()
     insert_data()
     loginScreen()
