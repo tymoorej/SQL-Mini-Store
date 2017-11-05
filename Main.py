@@ -25,19 +25,6 @@ class RCustomer(Customer):
         self.name = name
         self.address = address
 
-class item:
-    def __init__(self, pid, qty, sid ):
-        self.pid = pid
-        self.qty = qty
-        self.sid = sid
-
-class asket:
-
-    def __init__():
-        this.bucket = set()
-    def addItem(pid, qty, sid):
-        new = item(pid, qty, sid)
-        this.bucket.add(new)
 
 #### MARK: Setup Functions
 
@@ -384,7 +371,11 @@ def add_onto_base(results):
          '''
         ,[p])
         rows=cursor.fetchall()
-        results[i]=results[i]+(rows[0][0],)
+        if len(rows)!=0:
+            results[i]=results[i]+(rows[0][0],)
+        else:
+            results[i]=results[i]+(0,)
+
 
 
 
@@ -406,7 +397,11 @@ def add_onto_base(results):
          '''
         ,[p])
         rows=cursor.fetchall()
-        results[i]=results[i]+(rows[0][0],)
+        if len(rows)!=0:
+            results[i]=results[i]+(rows[0][0],)
+        else:
+            results[i]=results[i]+(0,)
+
 
 
 
@@ -433,7 +428,10 @@ def csearch() :
 
     LAYOUT = "{!s:15} {!s:25} {!s:20} {!s:15} {!s:25} {!s:15} {!s:25} {!s:15}"
 
-    if len(results)<5:
+    if len(results)==0:
+        print("There are no results that match.")
+
+    elif len(results)<5:
         print(LAYOUT.format("Product ID","Product Name","Product Unit","# of Stores","# of Stores(in stock)","Min Price","Min Price(in stock)","Orders in last week"))
         for i in range(len(results)):
             print(LAYOUT.format(*results[i]))
@@ -536,7 +534,15 @@ def more_info(pid):
         while choice >= len(rows) or choice < 0:
             print("Please choose a valid row")
             choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
-        qty= int(input("How many do you want? (note min is 1) "))
+        qty=1
+        check = input("\n\nThe default order quantity is 1, would you like to change it? [y/n] ").lower()
+        if check == 'y':
+            qty= int(input("How many do you want? (note min is 1) "))
+            while qty<1:
+                print("Please choose a quantity greater than or equal to 1")
+                qty= int(input("How many do you want? (note min is 1) "))
+
+
         addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
 
     print("\n\nNot in stock:\n\n")
@@ -569,8 +575,8 @@ def checkBasket():
 
 def addtoBasket(pid, sid, uprice, qty):
     global basket
-    if (pid, sid, uprice) in basket:
-        basket[(pid, sid, uprice)] += qty
+    if (pid,sid,uprice) in basket:
+        basket[(pid,sid,uprice)]+=qty
     else:
         basket[(pid, sid, uprice)] = qty
 
