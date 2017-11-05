@@ -1199,20 +1199,22 @@ def moreInfoListOrder(oid):
     ,[oid])
 
     rows1 = cursor.fetchall()
+    for i in range(len(rows1)):
+        print(LAYOUT.format(*rows1[i]))
 
-    print(rows1)
 
-
-    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20} {!s:20} {!s:20} {!s:20}"
+    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:30} {!s:20} {!s:20} {!s:20}"
     print(LAYOUT.format("Store ID","Store Name","Product ID",'product name',"Quantity", 'Unit', 'Unit Price'))
     cursor.execute('''
     SELECT ol.sid, stores.name, ol.pid, p.name, ol.qty, p.unit, ol.uprice
-    FROM products p, olines ol, stores, deliveries d, orders o
-    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid and d.oid = o.oid and o.oid = ?
-    ''',[oid])
+    FROM products p, olines ol, stores
+    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and ol.oid = ?
+    '''
+    ,[oid])
     rows2 = cursor.fetchall()
 
-    print(rows2)
+    for i in range(len(rows2)):
+        print(LAYOUT.format(*rows2[i]))
 
 def main():
     setup_test() #setup()
