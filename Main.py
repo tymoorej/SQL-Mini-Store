@@ -1033,7 +1033,7 @@ def listorder():
                 print("Sorry that row does not exist please try again")
             else:
                 moreInfoListOrder(results[row_index][0])
-                break
+                return
         else:
             times_moved=0
         while True:
@@ -1077,7 +1077,7 @@ def listorder():
                 print("Sorry that row does not exist please try again")
             else:
                 moreInfoListOrder(results[times_moved*5+row_index][0])
-                break
+                return
 
 
         sPrint("")
@@ -1086,15 +1086,20 @@ def listorder():
 def moreInfoListOrder(oid):
     '''The user should be able to select an order and see more detail of the order including delivery information such as tracking number, pick up and drop off times, the address to be delivered, and a listing of the products in the order, which will include for each product the store id, the store name, the product id, the product name, quantity, unit and unit price.
     '''
+    global cursor
     LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20}"
     print(LAYOUT.format("Tracking #","Pick up Time","Drop off Time","Address"))
+
     cursor.execute('''
     SELECT d.trackingNo, d.pickUpTime, d.dropOffTime,o.address
-    FROM products p, olines ol, stores, deliveries d, orders o
-    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid, and d.oid = o.oid and o.oid = ?
-    ''',[oid])
+    FROM deliveries d, orders o
+    WHERE d.oid = o.oid and o.oid=?
+    '''
+    ,[oid])
+
     rows1 = cursor.fetchall()
 
+    print(rows1)
 
 
     LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20} {!s:20} {!s:20} {!s:20}"
@@ -1102,11 +1107,13 @@ def moreInfoListOrder(oid):
     cursor.execute('''
     SELECT ol.sid, stores.name, ol.pid, p.name, ol.qty, p.unit, ol.uprice
     FROM products p, olines ol, stores, deliveries d, orders o
-    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid, and d.oid = o.oid and o.oid = ?
+    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid and d.oid = o.oid and o.oid = ?
     ''',[oid])
     rows2 = cursor.fetchall()
 
-        
+    print(rows2)
+
+
 def main():
     global user
     setup_test() #setup()
