@@ -612,6 +612,7 @@ def placeOrder():
                 cursor.execute("""UPDATE carries
                                 SET qty = qty - ?
                                 WHERE sid=? AND pid=?""", [qty,sid,pid])
+                connection.commit()
                 order.append((uOrder,sid,pid,qty,uprice))
             elif choice == 2:
                 del basket[(pid,sid,uprice)]
@@ -619,6 +620,7 @@ def placeOrder():
             cursor.execute("""UPDATE carries
                             SET qty = qty - ?
                             WHERE sid=? AND pid=?""", [qty,sid,pid])
+            connection.commit()
             order.append((uOrder,sid,pid,qty,uprice))
 
     # Creating new orders
@@ -699,6 +701,7 @@ def setupDeliveries():
 
         for deliv in deliveries:
             cursor.execute("INSERT INTO deliveries VALUES (?,?,?,?)",[uDelivery,deliv[0],deliv[1], None]),
+        connection.commit()
         break
 
 def addtoStock():
@@ -711,8 +714,23 @@ def addtoStock():
     cursor.execute(""" SELECT * FROM carries WHERE sid=? AND pid=?""", [sid, pid])
     rows=cursor.fetchall()
     if len(rows) != 1:
-        print("Invalid PID SID combination...")
-        return
+        cursor.execute(""" SELECT * FROM products WHERE pid=?""", [pid])
+        prodExist =cursor.fetchall()
+        cursor.execute(""" SELECT * FROM stores WHERE sid=?""", [sid])
+        storeExist =cursor.fetchall()
+        if len(storeExist) and len(prodExist):
+            addQty = int(input("How many should be added? "))
+            option = input("Do you want to add a unit price? [y/n] ")
+            if option == 'y':
+                addPrice = float(input("What should the new unit price be? "))
+            else:
+                addPrice = None
+            # carries(sid, pid, qty, uprice)
+            cursor.execute("INSERT INTO carries VALUES (?,?,?,?)",(sid,pid,addQty,addPrice))
+            connection.commit()
+        else:
+            print("Invalid PID and/or SID does not exist...")
+            return
     else:
         while True :
             option = int(input("Select the corresponding for your chosen option:\n 1.Add to the Stock\n 2.Change the Unit Price\n 3.Exit\n"))
@@ -729,6 +747,7 @@ def addtoStock():
             elif option == 3:
                 checkCarries()
                 break
+        connection.commit()
 
 
 
@@ -890,6 +909,8 @@ def loginScreen():
         if curMode == MENU:
             print("LOG-IN SCREEN")
             curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
+            if curMode not in range(0,5):
+                curMode = MENU
         if curMode == CUSTOMER:
             #TODO: Implement the Customer and Agent menus
             error = login(CUSTOMER)
@@ -917,6 +938,8 @@ def loginScreen():
             logout()
             print("Exiting... ")
             break
+        else:
+            pass
 
 def main():
     global user
