@@ -569,7 +569,10 @@ def checkBasket():
 
 def addtoBasket(pid, sid, uprice, qty):
     global basket
-    basket[(pid, sid, uprice)] = qty
+    if (pid, sid, uprice) in basket:
+        basket[(pid, sid, uprice)] += qty
+    else:
+        basket[(pid, sid, uprice)] = qty
 
 def checkOrders():
     """
