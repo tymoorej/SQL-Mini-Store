@@ -528,12 +528,39 @@ def more_info(pid):
     else:
         print("No Results\n")
 
-    order = input("\n\nWould you like to order any of these options? [y/n] ").lower()
+
+    print("\n\nNot in stock:\n\n")
+
+    cursor.execute('''
+    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
+    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
+    GROUP BY c.sid, c.qty, c.uprice
+     '''
+    ,[pid])
+    rows2=cursor.fetchall()
+    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
+    if len(rows2) != 0:
+        print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
+        print(LAYOUT.format(*rows2[0]))
+    else:
+        print("No Results")
+
+
+    if len(rows)==0:
+        print()
+        print()
+        print()
+
+        print("Sorry you cannot order that product because no store has it in stock")
+        return
+
+    order = input("\n\nWould you like to order any of these options(From the in stock stores)? [y/n] ").lower()
     if order == 'y':
-        choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+        choice = int(input("Select the number of the row(From the in stock stores) you would like to know more about (NOTE row starts at 0): "))
         while choice >= len(rows) or choice < 0:
             print("Please choose a valid row")
-            choice = int(input("Select the number of the row you would like to know more about (NOTE row starts at 0): "))
+            choice = int(input("Select the number of the row(From the in stock stores) you would like to know more about (NOTE row starts at 0): "))
         qty=1
         check = input("\n\nThe default order quantity is 1, would you like to change it? [y/n] ").lower()
         if check == 'y':
@@ -545,22 +572,6 @@ def more_info(pid):
 
         addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
 
-    print("\n\nNot in stock:\n\n")
-
-    cursor.execute('''
-    SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
-    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
-    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
-    GROUP BY c.sid, c.qty, c.uprice
-     '''
-    ,[pid])
-    rows=cursor.fetchall()
-    LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
-    if len(rows) != 0:
-        print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
-        print(LAYOUT.format(*rows[0]))
-    else:
-        print("No Results")
 
 #### MARK: Order functions
 def fillBasket():
@@ -579,6 +590,10 @@ def addtoBasket(pid, sid, uprice, qty):
         basket[(pid,sid,uprice)]+=qty
     else:
         basket[(pid, sid, uprice)] = qty
+    print()
+    print("Your basket is now: ", basket)
+    print()
+
 
 def checkOrders():
     """
@@ -616,9 +631,11 @@ def placeOrder():
             print("The store " + sname[0][0] + " only has " + str(realQty[0][0]) + " " + pname[0][0] + "s. ")
             choice = int(input("Would you like to: \n1.Change the quantity? \n 2.Delete product from basket?\n"))
             if choice == 1:
-                print(qty, realQty[0][0])
-                while qty > realQty[0][0] :
-                    qty = int(input("What is your new quantity?"))
+                print("Maximum quantity: ", realQty[0][0])
+                qty = int(input("What is your new quantity? "))
+                while qty > realQty[0][0] or qty<0:
+                    print("Please select a quantity lesser than or equal to the max quantity and greater than or equal to zero")
+                    qty = int(input("What is your new quantity? "))
                 cursor.execute("""UPDATE carries
                                 SET qty = qty - ?
                                 WHERE sid=? AND pid=?""", [qty,sid,pid])
@@ -774,14 +791,20 @@ def logout():
 
 def login(userType): #cid, name, address, pwd)
     global user
+
     if userType == 1:
         if user is None:
             while True:
+                print()
+                print()
+                print()
                 option = int(input("Select corresponding number: \n1.Log In \n2.Sign Up \n3.Exit \n"))
                 if option in [1,2]:
                     break
                 elif option == 3:
                     return -2
+                else:
+                    print("Please select a valid number")
             error = customerLogIn(option)
             if error is not None:
                 #sPrint("Invalid Log In Credentials")
@@ -795,6 +818,11 @@ def login(userType): #cid, name, address, pwd)
 
 def agentLogin():
     global user
+
+    print()
+    print()
+    print()
+
     username = input("Enter a valid ID. Enter exit to return: ").strip()
     if username.lower() == 'exit':
         return -2
@@ -809,12 +837,16 @@ def agentLogin():
 
 def customerLogIn(option):
     global user
+
+    print()
+    print()
+    print()
+
     if option == 1:
         username = input("Enter a valid ID: ").strip()
         pas = getpass(prompt='Password: ')
         cursor.execute(""" SELECT * FROM customers WHERE cid=? AND pwd=?""", [username, pas])
         rows=cursor.fetchall()
-        print(rows)
         if len(rows) != 1:
             return -1
         else:
@@ -848,12 +880,20 @@ def sPrint (message):
 def customerMenu():
     global user
     global basket
-    MENU, SEARCH, ORDER, LIST, LOGOFF, BACK = range(0,6)
+    MENU, SEARCH, ORDER, LIST, LOGOFF = range(0,5)
     curMode = MENU
-    while curMode != BACK:
+    while True:
+
+        print()
+        print()
+        print()
+
         if curMode == MENU:
             print("CUSTOMER MENU")
-            curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n 5.Return\n"))
+            curMode = int(input("Select corresponding number: \n 1.Search\n 2.Order\n 3.List Orders\n 4.LogOff\n"))
+            if curMode not in range(1,5):
+                sPrint("Invalid mode. Please try again.")
+                curMode=MENU
         elif curMode == SEARCH:
             #TODO: Tymoore add the search function call here
 
@@ -865,28 +905,35 @@ def customerMenu():
             if len(basket) :
                 placeOrder()
                 basket = dict()
+                print()
+                if len(basket)==0:
+                    print("Your basket is now empty")
+                else:
+                    print("Your basket is now: ", basket)
+                print()
             else:
                 print("Nothing to order...")
-            curMode=BACK
+            curMode=MENU
         elif curMode == LIST:
             #TODO: Dorsa add list function
-            pass
+            curMode=MENU
         elif curMode == LOGOFF:
             logout()
-            curMode = BACK
-        elif curMode != BACK:
-            sPrint("Invalid mode. Try again.")
+            break
     sPrint("Returning to Main Menu...")
 
 
 def agentMenu():
     global user
-    MENU, SETUP, UPDATE, ADD, LOGOFF, BACK = range(0,6)
+    MENU, SETUP, UPDATE, ADD, LOGOFF = range(0,5)
     curMode = MENU
-    while curMode != BACK:
+    while True:
         if curMode == MENU:
             sPrint("Agent MENU")
-            curMode = int(input("Select corresponding number: \n 1.Set up delivery\n 2.Update Delivery\n 3.Add to stock\n 4.LogOff\n 5.Return\n"))
+            curMode = int(input("Select corresponding number: \n 1.Set up delivery\n 2.Update Delivery\n 3.Add to stock\n 4.LogOff\n"))
+            if curMode not in range(1,5):
+                sPrint("Invalid mode. Please try again.")
+                curMode=MENU
         elif curMode == SETUP:
             #TODO: add the setup function call here
             setupDeliveries()
@@ -897,32 +944,35 @@ def agentMenu():
         elif curMode == ADD:
             #TODO:  add the add function
             addtoStock()
-            checkCarries()
+            # checkCarries()
             curMode = MENU
         elif curMode == LOGOFF:
             logout()
-            curMode = BACK
-        elif curMode != BACK:
-            sPrint("Invalid mode. Try again.")
+            break
     sPrint("Returning to Main Menu...")
 
 def loginScreen():
     global user
-    MENU, CUSTOMER, AGENT, LOGOFF, QUIT = range(0,5)
+    MENU, CUSTOMER, AGENT, QUIT = range(0,4)
     curMode = MENU
     pastMode = curMode
     while True:
+        print()
+        print()
+        print()
+
         if user:
             print("Current User:", user.username)
         else:
-            print("Current User:", user)
+            print("Current User: Not logged in")
+        print()
         if curMode == MENU:
             print("LOG-IN SCREEN")
-            curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.LogOff \n 4.Quit Program\n"))
-            if curMode not in range(0,5):
+            curMode = int(input("Select corresponding number: \n 1.Customer \n 2.Agent \n 3.Quit Program\n"))
+            if curMode not in range(1,4):
+                sPrint("Please select a valid number")
                 curMode = MENU
         if curMode == CUSTOMER:
-            #TODO: Implement the Customer and Agent menus
             error = login(CUSTOMER)
             if error == -1:
                 sPrint("Invalid ID and Password Combination. Try Again")
@@ -940,10 +990,6 @@ def loginScreen():
             else:
                 agentMenu()
                 curMode = MENU
-        elif curMode == LOGOFF:
-            logout()
-            sPrint("Logging out...")
-            curMode = MENU
         elif curMode == QUIT:
             logout()
             print("Exiting... ")
