@@ -1212,11 +1212,7 @@ def moreInfoListOrder(oid):
     ''',[oid])
     rows2 = cursor.fetchall()
 
-<<<<<<< HEAD
     print(rows2)
-
-=======
->>>>>>> 4d56ef283fde9efb73c339356f691fb2545f1cbf
 
 def main():
     setup_test() #setup()
