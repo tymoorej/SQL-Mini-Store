@@ -422,6 +422,7 @@ def csearch() :
     """
     Tymoore's search function
     """
+    global cursor
     keywords=input("Please enter your space seperated keywords: ")
     results=search_for_keyword(keywords)
     sPrint("")
@@ -599,6 +600,7 @@ def checkOrders():
     """
     Just a testing function
     """
+    global cursor
     cursor.execute(""" SELECT * FROM olines""")
     ol=cursor.fetchall()
     cursor.execute(""" SELECT * FROM orders""")
@@ -607,14 +609,14 @@ def checkOrders():
     print(o)
 
 def checkCarries():
+    global cursor
     cursor.execute(""" SELECT * FROM carries""")
     c=cursor.fetchall()
     print(c)
 
 def placeOrder():
-    global user
-    global basket
-    global uOrder
+    global user,basket, uOrder, cursor, connection
+
     cursor.execute(""" SELECT max(oid) FROM orders """)
     uOrder=cursor.fetchall()[0][0] + 10
     order = []
@@ -662,13 +664,15 @@ def checkDeliveries():
     """
     Just a testing function
     """
+    global cursor
+
     cursor.execute(""" SELECT * FROM deliveries""")
     d=cursor.fetchall()
     print(d)
 
 def setupDeliveries():
-    global user
-    global uDelivery
+    global user, uDelivery, cursor, connection
+
     cursor.execute(""" SELECT max(trackingNo) FROM deliveries """)
     uDelivery=cursor.fetchall()[0][0] + 1
     deliveries = []
@@ -731,8 +735,104 @@ def setupDeliveries():
         connection.commit()
         break
 
+def updateDelivery():
+    global cursor
+    # deliveries(trackingno, oid, pickUpTime, dropOffTime)
+    tNo = int(input("Which delivery do you want to view? "))
+    cursor.execute(""" SELECT * FROM deliveries WHERE trackingNo=?""", [tNo])
+    deliv = cursor.fetchall()
+    LAYOUT = "{!s:14} {!s:10} {!s:28} {!s:15}"
+    if len(deliv) == 0:
+        print("That delivery does not exist...")
+        return
+    else:
+
+        times_moved=0
+        while True:
+            minimum=min(times_moved*5+5,len(deliv))
+
+            if(times_moved*5+5<len(deliv)):
+                sPrint("")
+
+                print(LAYOUT.format("Tracking No.","Order ID","Pickup Time","Drop Off Time"))
+                for i in range(times_moved*5,minimum):
+                    print(LAYOUT.format(*deliv[i]))
+                scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                if scroll==1:
+                    times_moved=times_moved + 1
+                    continue
+                elif scroll==0:
+                    pass
+                else:
+                    should_continue=0
+                    while True:
+                        print("Please select either 0 or 1")
+                        scroll=int(input("Select 1 to see more rows or 0 to examine these rows further: "))
+                        if scroll==0:
+                            break
+                        elif scroll==1:
+                            times_moved=times_moved + 1
+                            should_continue=1
+                            break
+                    if should_continue:
+                        continue
+
+            else:
+                sPrint("")
+                print(LAYOUT.format("Tracking No.","Order ID","Pickup Time","Drop Off Time"))
+                for i in range(times_moved*5,len(deliv)):
+                    print(LAYOUT.format(*deliv[i]))
+
+            row_index = int(input("Select the number of the row corresponding to the order you want to pick up (NOTE row starts at 0): "))
+
+            minimum=min(times_moved*5+5,len(deliv))
+            if(row_index>=(minimum-times_moved*5) or row_index<0):
+                print("Sorry that row does not exist please try again")
+            else:
+                editOrder(deliv[times_moved*5+row_index])
+                break
+
+def editOrder(orderTuple):
+    global connection
+    # deliveries(trackingno, oid, pickUpTime, dropOffTime)
+    anotherOne = 'y'
+    while anotherOne == 'y':
+        option = int(input("Select the number corresponding to option you want:\n 1. Change the Pickup Time\n 2. Change the DropOff Time\n 3. Delete the Order\n"))
+        if option not in [1,2,3]:
+            print("Incorrect selection...")
+        else:
+            if option == 1:
+                pckup = input("Add a pickup time (in format 'YYYY MM DD'): ")
+                try:
+                    pckup = datetime.strptime(pckup, '%Y %m %d')
+                    cursor.execute("""UPDATE deliveries
+                                    SET pickUpTime = ?
+                                    WHERE oid=? AND trackingNo=?""" , [pckup,orderTuple[1],orderTuple[0]])
+                except ValueError:
+                    print("Wrong date format...")
+            elif option == 2:
+                dpoff = input("Add a drop off time (in format 'YYYY MM DD'): ")
+                try:
+                    dpoff = datetime.strptime(dpoff, '%Y %m %d')
+                    cursor.execute("""UPDATE deliveries
+                                    SET dropOffTime = ?
+                                    WHERE oid=? AND trackingNo=?""" , [dpoff,orderTuple[1],orderTuple[0]])
+                except ValueError:
+                    print("Wrong date format...")
+            elif option == 3:
+                cursor.execute("""DELETE FROM deliveries
+                                WHERE trackingNo=? AND oid=?
+                                """ ,
+                                [orderTuple[0],orderTuple[1]])
+                connection.commit()
+            else:
+                print("No corresping option...")
+            anotherOne = input("Do you want to make more changes? [y/n] ").lower()
+    connection.commit()
+
 def addtoStock():
-    global user
+    global user, cursor
+
     cursor.execute(""" SELECT * FROM carries """)
     prodList = cursor.fetchall()
     times_moved=0
@@ -781,8 +881,8 @@ def addtoStock():
 
 #### MARK: Menu Functions
 def logout():
-    global user
-    global basket
+    global user, basket, cursor
+
     if user:
         print("Logout:", user.username)
     user = None
@@ -817,7 +917,7 @@ def login(userType): #cid, name, address, pwd)
 
 
 def agentLogin():
-    global user
+    global user, cursor
 
     print()
     print()
@@ -941,6 +1041,7 @@ def agentMenu():
             curMode = MENU
         elif curMode == UPDATE:
             #TODO: Add update function call here
+            updateDelivery()
             curMode = MENU
         elif curMode == ADD:
             #TODO:  add the add function
@@ -1111,11 +1212,13 @@ def moreInfoListOrder(oid):
     ''',[oid])
     rows2 = cursor.fetchall()
 
+<<<<<<< HEAD
     print(rows2)
 
+=======
+>>>>>>> 4d56ef283fde9efb73c339356f691fb2545f1cbf
 
 def main():
-    global user
     setup_test() #setup()
     define_tables()
     insert_data()
