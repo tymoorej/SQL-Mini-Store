@@ -525,7 +525,8 @@ def more_info(pid):
     LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
     print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
     if len(rows) != 0:
-        print(LAYOUT.format(*rows[0]))
+        for i in range(len(rows)):
+            print(LAYOUT.format(*rows[i]))
     else:
         print("No Results\n")
 
@@ -543,7 +544,8 @@ def more_info(pid):
     LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
     if len(rows2) != 0:
         print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
-        print(LAYOUT.format(*rows2[0]))
+        for i in range(len(rows2)):
+            print(LAYOUT.format(*rows2[i]))
     else:
         print("No Results")
 
@@ -1106,10 +1108,10 @@ def listorder():
     global connection, cursor
     temp = user.username
     cursor.execute('''
-    SELECT o.oid, o.odate, ol.qty, COUNT(ol.pid), SUM(ol.uprice)
+    SELECT o.oid, o.odate, COUNT(ol.pid), SUM(ol.uprice)
     FROM orders o, olines ol
     WHERE o.oid = ol.oid AND o.cid=?
-    GROUP BY o.oid, o.odate, ol.qty
+    GROUP BY o.oid, o.odate
     ORDER BY o.odate
      ''',[temp])
     results=cursor.fetchall()
