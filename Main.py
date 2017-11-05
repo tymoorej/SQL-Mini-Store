@@ -916,6 +916,7 @@ def customerMenu():
             curMode=MENU
         elif curMode == LIST:
             #TODO: Dorsa add list function
+            listorder()
             curMode=MENU
         elif curMode == LOGOFF:
             logout()
