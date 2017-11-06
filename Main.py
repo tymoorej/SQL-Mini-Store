@@ -707,6 +707,7 @@ def setupDeliveries():
     cursor.execute(""" SELECT max(trackingNo) FROM deliveries """)
     uDelivery=cursor.fetchall()[0][0] + 1
     deliveries = []
+    ordersChosen = set()
 
     cursor.execute(""" SELECT * FROM orders""")
     ordersList = cursor.fetchall()
@@ -749,6 +750,11 @@ def setupDeliveries():
 
         while anotherOne == 'y':
             row_index = int(input("Select the number of the row you would like to add to the delivery (NOTE row starts at 0): "))
+            if row_index in ordersChosen:
+                print("You already added that delivery... Try again please.")
+                continue
+            else :
+                ordersChosen.add(row_index)
             minimum=min(times_moved*5+5,len(ordersList))
             if(row_index>=(minimum-times_moved*5) or row_index<0):
                 print("Sorry that row does not exist please try again")
