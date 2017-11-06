@@ -661,7 +661,7 @@ def placeOrder():
     cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
     connection.commit()
-    checkOrders()
+    #checkOrders()
 
 #### MARK: Agent options
 # orders(oid, cid, odate, address)
@@ -878,7 +878,7 @@ def addtoStock():
                                 SET uprice = ?
                                 WHERE sid=? AND pid=?""" , [addPrice,sid,pid])
             elif option == 3:
-                checkCarries()
+                #checkCarries()
                 break
         connection.commit()
 
