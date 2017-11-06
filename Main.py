@@ -624,6 +624,7 @@ def placeOrder():
     cursor.execute(""" SELECT max(oid) FROM orders """)
     uOrder=cursor.fetchall()[0][0] + 10
     order = []
+    keys_to_delete=set()
     for items in basket:
         pid, sid, uprice = items
         qty = basket[items]
@@ -635,7 +636,7 @@ def placeOrder():
         pname = cursor.fetchall()
         if qty > realQty[0][0]:
             print("The store " + sname[0][0] + " only has " + str(realQty[0][0]) + " " + pname[0][0] + "s. ")
-            choice = int(input("Would you like to: \n1.Change the quantity? \n 2.Delete product from basket?\n"))
+            choice = int(input("Would you like to: \n1.Change the quantity? \n2.Delete product from basket?\n"))
             if choice == 1:
                 print("Maximum quantity: ", realQty[0][0])
                 qty = int(input("What is your new quantity? "))
@@ -648,7 +649,7 @@ def placeOrder():
                 connection.commit()
                 order.append((uOrder,sid,pid,qty,uprice))
             elif choice == 2:
-                del basket[(pid,sid,uprice)]
+                keys_to_delete.add((pid,sid,uprice))
         else :
             cursor.execute("""UPDATE carries
                             SET qty = qty - ?
@@ -662,6 +663,8 @@ def placeOrder():
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
     connection.commit()
     # checkOrders()
+    for k in keys_to_delete:
+        del basket[k]
 
 #### MARK: Agent options
 # orders(oid, cid, odate, address)
@@ -732,6 +735,7 @@ def setupDeliveries():
                 try:
                     pckup = datetime.strptime(pckup, '%Y %m %d')
                 except ValueError:
+                    print("Date is either invalid or no and will be set to null")
                     pckup = None
                 deliveries.append((ordersList[times_moved*5+row_index][0],pckup)) # datetime.strptime('Jun 1 2005  1:33PM', '%b %d %Y %I:%M%p')
                 anotherOne = input("Do you want to add another order to your a delivery? [y/n]: ").lower()
@@ -1109,14 +1113,14 @@ def listorder():
     '''
     List orders. The customer should be able to see all his/her orders; the listing should include for each order, the order id, order date, the number of products ordered and the total price; the orders should be listed in a sorted order with more recent orders listed first. If there are more than 5 orders, only 5 would be shown and the user would be given an option to see more but again 5 at a time. The user should be able to select an order and see more detail of the order including delivery information such as tracking number, pick up and drop off times, the address to be delivered, and a listing of the products in the order, which will include for each product the store id, the store name, the product id, the product name, quantity, unit and unit price.
     '''
-    global connection, cursor
+    global connection, cursor, user
     temp = user.username
     cursor.execute('''
     SELECT o.oid, o.odate, COUNT(DISTINCT ol.pid)
     FROM orders o, olines ol
     WHERE o.oid = ol.oid AND o.cid=?
     GROUP BY o.oid, o.odate
-    ORDER BY o.odate
+    ORDER BY o.odate DESC
      ''',[temp])
     results=cursor.fetchall()
 
@@ -1144,8 +1148,8 @@ def listorder():
             else:
                 moreInfoListOrder(results[row_index][0])
                 return
-        else:
-            times_moved=0
+    else:
+        times_moved=0
         while True:
             minimum=min(times_moved*5+5,len(results))
 
@@ -1190,7 +1194,7 @@ def listorder():
                 return
 
 
-        sPrint("")
+    sPrint("")
 
 def get_total_price(oid):
         cursor.execute('''
