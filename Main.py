@@ -280,7 +280,7 @@ def insert_data():
     (180, 'c20', datetime(2015, 9, 21), '9632-107 Ave'),
     (190, 'c50', datetime(2013, 7, 29), '391 Richfield Rd'),
     (200, 'c70', datetime(2013, 6, 17), '90 Jonah Ave'),
-    (210, 'c70', datetime(2017, 10, 23), '8012-122 St SW'),
+    (210, 'c70', datetime(2018, 10, 23), '8012-122 St SW'),
     (220, 'c80', datetime(2012, 3, 6), '54 Elanore Dr'),
     (230, 'c30', datetime(2011, 4, 6), '111-222 Ave'),]
     cursor.executemany("INSERT INTO orders VALUES (?,?,?,?)",insertions_orders),
@@ -517,7 +517,7 @@ def more_info(pid):
     cursor.execute('''
     SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
-    WHERE c.pid=? AND c.qty>0
+    WHERE c.pid=? AND c.qty>0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
      '''
     ,[pid])
@@ -535,8 +535,8 @@ def more_info(pid):
 
     cursor.execute('''
     SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
-    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
-    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
+    WHERE c.pid=? AND c.qty=0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
      '''
     ,[pid])
