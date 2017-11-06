@@ -519,6 +519,7 @@ def more_info(pid):
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
     WHERE c.pid=? AND c.qty>0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
+    ORDER BY c.uprice
      '''
     ,[pid])
     rows=cursor.fetchall()
@@ -538,6 +539,7 @@ def more_info(pid):
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
     WHERE c.pid=? AND c.qty=0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
+    ORDER BY c.uprice
      '''
     ,[pid])
     rows2=cursor.fetchall()
