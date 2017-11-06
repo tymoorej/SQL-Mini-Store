@@ -280,7 +280,7 @@ def insert_data():
     (180, 'c20', datetime(2015, 9, 21), '9632-107 Ave'),
     (190, 'c50', datetime(2013, 7, 29), '391 Richfield Rd'),
     (200, 'c70', datetime(2013, 6, 17), '90 Jonah Ave'),
-    (210, 'c70', datetime(2017, 10, 23), '8012-122 St SW'),
+    (210, 'c70', datetime(2018, 10, 23), '8012-122 St SW'),
     (220, 'c80', datetime(2012, 3, 6), '54 Elanore Dr'),
     (230, 'c30', datetime(2011, 4, 6), '111-222 Ave'),]
     cursor.executemany("INSERT INTO orders VALUES (?,?,?,?)",insertions_orders),
@@ -517,7 +517,7 @@ def more_info(pid):
     cursor.execute('''
     SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
-    WHERE c.pid=? AND c.qty>0
+    WHERE c.pid=? AND c.qty>0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
      '''
     ,[pid])
@@ -525,7 +525,8 @@ def more_info(pid):
     LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
     print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
     if len(rows) != 0:
-        print(LAYOUT.format(*rows[0]))
+        for i in range(len(rows)):
+            print(LAYOUT.format(*rows[i]))
     else:
         print("No Results\n")
 
@@ -534,8 +535,8 @@ def more_info(pid):
 
     cursor.execute('''
     SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
-    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid)
-    WHERE c.pid=? AND c.qty=0 AND o.oid=ol.oid
+    FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
+    WHERE c.pid=? AND c.qty=0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
      '''
     ,[pid])
@@ -543,7 +544,8 @@ def more_info(pid):
     LAYOUT = "{!s:10} {!s:10} {!s:12} {!s:18}"
     if len(rows2) != 0:
         print(LAYOUT.format("Store ID","Quantity","Unit Price","Bought in last week"))
-        print(LAYOUT.format(*rows2[0]))
+        for i in range(len(rows2)):
+            print(LAYOUT.format(*rows2[i]))
     else:
         print("No Results")
 
@@ -1111,7 +1113,7 @@ def listorder():
     SELECT o.oid, o.odate, COUNT(ol.pid), SUM(ol.uprice)
     FROM orders o, olines ol
     WHERE o.oid = ol.oid AND o.cid=?
-    GROUP BY o.oid, o.odate, ol.qty
+    GROUP BY o.oid, o.odate
     ORDER BY o.odate
      ''',[temp])
     results=cursor.fetchall()
@@ -1136,7 +1138,7 @@ def listorder():
                 print("Sorry that row does not exist please try again")
             else:
                 moreInfoListOrder(results[row_index][0])
-                break
+                return
         else:
             times_moved=0
         while True:
@@ -1180,7 +1182,7 @@ def listorder():
                 print("Sorry that row does not exist please try again")
             else:
                 moreInfoListOrder(results[times_moved*5+row_index][0])
-                break
+                return
 
 
         sPrint("")
@@ -1189,27 +1191,36 @@ def listorder():
 def moreInfoListOrder(oid):
     '''The user should be able to select an order and see more detail of the order including delivery information such as tracking number, pick up and drop off times, the address to be delivered, and a listing of the products in the order, which will include for each product the store id, the store name, the product id, the product name, quantity, unit and unit price.
     '''
+    global cursor
     LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20}"
     print(LAYOUT.format("Tracking #","Pick up Time","Drop off Time","Address"))
 
     cursor.execute('''
-    SELECT d.trackingNo, d.pickUpTime, d.dropOffTime, o.address
+    SELECT d.trackingNo, d.pickUpTime, d.dropOffTime,o.address
     FROM deliveries d, orders o
-    WHERE d.oid = o.oid and o.oid = ?
-    ''',[oid])
-    rows1 = cursor.fetchall()
+    WHERE d.oid = o.oid and o.oid=?
+    '''
+    ,[oid])
+    if len(oid)==0:
+        print('Waiting on an Agent')
+    else:
+        rows1 = cursor.fetchall()
+        for i in range(len(rows1)):
+            print(LAYOUT.format(*rows1[i]))
 
 
-
-    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20} {!s:20} {!s:20} {!s:20}"
+    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:30} {!s:20} {!s:20} {!s:20}"
     print(LAYOUT.format("Store ID","Store Name","Product ID",'product name',"Quantity", 'Unit', 'Unit Price'))
     cursor.execute('''
     SELECT ol.sid, stores.name, ol.pid, p.name, ol.qty, p.unit, ol.uprice
-    FROM products p, olines ol, stores, deliveries d, orders o
-    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid and d.oid = o.oid and o.oid = ?
-    ''',[oid])
+    FROM products p, olines ol, stores
+    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and ol.oid = ?
+    '''
+    ,[oid])
     rows2 = cursor.fetchall()
 
+    for i in range(len(rows2)):
+        print(LAYOUT.format(*rows2[i]))
 
 def main():
     setup_test() #setup()
