@@ -1199,10 +1199,12 @@ def moreInfoListOrder(oid):
     WHERE d.oid = o.oid and o.oid=?
     '''
     ,[oid])
-
-    rows1 = cursor.fetchall()
-    for i in range(len(rows1)):
-        print(LAYOUT.format(*rows1[i]))
+    if len(oid)==0:
+        print('Waiting on an Agent')
+    else:
+        rows1 = cursor.fetchall()
+        for i in range(len(rows1)):
+            print(LAYOUT.format(*rows1[i]))
 
 
     LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:30} {!s:20} {!s:20} {!s:20}"
