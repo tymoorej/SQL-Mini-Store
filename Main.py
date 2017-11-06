@@ -28,7 +28,11 @@ class RCustomer(Customer):
 
 #### MARK: Setup Functions
 
+
 def setup():
+    '''
+    Setup the connection to the database and generate our cursor
+    '''
     global connection, cursor
     db = sys.argv[1]
     if db is None:
@@ -39,6 +43,10 @@ def setup():
     connection.commit()
 
 def setup_test():
+    '''
+    Another setup method. Used in testing, does not allow users to select a
+    database
+    '''
     global connection, cursor
     connection = sqlite3.connect("./store.db")
     cursor = connection.cursor()
@@ -46,6 +54,9 @@ def setup_test():
     connection.commit()
 
 def define_tables():
+    '''
+    Drops the tables if they already exist and then re creates them.
+    '''
     global connection, cursor
     drop_tables='''
     drop table if exists deliveries;
@@ -127,6 +138,9 @@ def define_tables():
     connection.commit()
 
 def insert_data():
+    '''
+    Insert all of our test data into our tables
+    '''
     global connection, cursor
 
     #agents(aid, name, pwd)
@@ -331,12 +345,22 @@ def insert_data():
 
 #### MARK: Search functions
 def search_for_keyword(keywords):
+    '''
+    This method handels searching for keywords, first it gets the base
+    of the query (majority of columns), then it runs some additional queries to
+    add onto the base query.
+    '''
     results=get_base(keywords)
     results=add_onto_base(results)
 
     return results
 
 def get_base(keywords):
+    '''
+    Given a list of space seperated keywords this method gets the product ID,
+    name, unit and count of stores that carries it. From there it sorts the results
+    by the number of keywords they match and then removes all duplicate rows.
+    '''
     global connection, cursor
     keyword_list=keywords.split(" ")
     results=[]
@@ -359,6 +383,11 @@ def get_base(keywords):
     return results
 
 def add_onto_base(results):
+    '''
+    Adds the columns "Distict sid in stock", "Minimum price",
+    "Minimum price in stock", and "Orders within the last 7 days" to the base
+    query
+    '''
     global connection, cursor
     for i in range(len(results)):
         p=results[i][0]
@@ -420,7 +449,9 @@ def add_onto_base(results):
 
 def csearch() :
     """
-    Tymoore's search function
+    Gets input of keywords from user and uses them to do the search query.
+    Then displays results, if more than 5 results are present then we allow
+    the user to scroll through the results.
     """
     global cursor
     keywords=input("Please enter your space seperated keywords: ")
@@ -496,6 +527,12 @@ def csearch() :
     sPrint("")
 
 def more_info(pid):
+    '''
+    This method gets called once a user has selected a pid to examine more
+    closley after the "seach for keyword" query. The purpose of this method is
+    to allow users to examine the pid in more detail and to add it to the users
+    basket.
+    '''
     global connection, cursor
     cursor.execute('''
     SELECT p.pid, p.name, p.unit, p.cat
@@ -513,7 +550,6 @@ def more_info(pid):
     print("\n\n"+pid + " can be found in the following stores:\n\n")
     print("In stock:\n\n")
 
-    # TODO: Fix queries- MAYBE????? BARE MINIMUM: ALOT MORE TESTING
     cursor.execute('''
     SELECT c.sid, c.qty, c.uprice, COUNT(DISTINCT ol.oid)
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
@@ -578,18 +614,13 @@ def more_info(pid):
         addtoBasket(pid, rows[choice][0], rows[choice][2], qty)
 
 
-#### MARK: Order functions
-def fillBasket():
-    global basket
-    basket[('p10',30,4.60)] = 2
-    basket[('p110',10,13.99)] = 1
-
-def checkBasket():
-    global basket
-    for keys in basket:
-        print(keys,basket[keys])
-
 def addtoBasket(pid, sid, uprice, qty):
+    '''
+    This method is invoked when a user wants to add a product to their basket.
+    If the product is already in thier basket from the same store at the same
+    price then the quantity is increased.
+
+    '''
     global basket
     if (pid,sid,uprice) in basket:
         basket[(pid,sid,uprice)]+=qty
@@ -600,25 +631,13 @@ def addtoBasket(pid, sid, uprice, qty):
     print()
 
 
-def checkOrders():
-    """
-    Just a testing function
-    """
-    global cursor
-    cursor.execute(""" SELECT * FROM olines""")
-    ol=cursor.fetchall()
-    cursor.execute(""" SELECT * FROM orders""")
-    o=cursor.fetchall()
-    print(ol)
-    print(o)
-
-def checkCarries():
-    global cursor
-    cursor.execute(""" SELECT * FROM carries""")
-    c=cursor.fetchall()
-    print(c)
-
 def placeOrder():
+    '''
+    This method is invoked when a customer wants to place an order.
+    It takes all the items from the basket and if there is enough quantity in stock
+    then it places the order. Otherwise it gives the user the option to either
+    reduce the quantity or remove the item from the basket.
+    '''
     global user,basket, uOrder, cursor, connection
 
     cursor.execute(""" SELECT max(oid) FROM orders """)
@@ -662,26 +681,19 @@ def placeOrder():
     cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
     connection.commit()
-    # checkOrders()
     for k in keys_to_delete:
         del basket[k]
 
 #### MARK: Agent options
 # orders(oid, cid, odate, address)
 
-def checkDeliveries():
-    """
-    Just a testing function
-    """
-    global cursor
-
-    cursor.execute(""" SELECT * FROM deliveries""")
-    d=cursor.fetchall()
-    print(d)
-
 def setupDeliveries():
+    '''
+    This method allows an agent to setup a delivery through setting up a pickup
+    time. It is custom built to allow for agents to scroll through the orders if
+    there are more than 5 orders.
+    '''
     global user, uDelivery, cursor, connection
-
     cursor.execute(""" SELECT max(trackingNo) FROM deliveries """)
     uDelivery=cursor.fetchall()[0][0] + 1
     deliveries = []
@@ -746,6 +758,10 @@ def setupDeliveries():
         break
 
 def updateDelivery():
+    '''
+    This method allows an agent to modify deliveries and edit the orders in that
+    delivery through the use of the editOrder method
+    '''
     global cursor
     # deliveries(trackingno, oid, pickUpTime, dropOffTime)
     tNo = int(input("Which delivery do you want to view? "))
@@ -803,6 +819,10 @@ def updateDelivery():
                 break
 
 def editOrder(orderTuple):
+    '''
+    This method allows an agent to change the pickup time of, change the dropoff
+    time of, or delete an order.
+    '''
     global connection
     # deliveries(trackingno, oid, pickUpTime, dropOffTime)
     anotherOne = 'y'
@@ -841,6 +861,9 @@ def editOrder(orderTuple):
     connection.commit()
 
 def addtoStock():
+    '''
+    This method allows an agent to add products to the stock of a store.
+    '''
     global user, cursor
 
     cursor.execute(""" SELECT * FROM carries """)
@@ -882,7 +905,6 @@ def addtoStock():
                                 SET uprice = ?
                                 WHERE sid=? AND pid=?""" , [addPrice,sid,pid])
             elif option == 3:
-                # checkCarries()
                 break
         connection.commit()
 
@@ -891,6 +913,10 @@ def addtoStock():
 
 #### MARK: Menu Functions
 def logout():
+    '''
+    This method is invoked when either a customer or an agent is logging off.
+    It clears the basket and sets the current user to None.
+    '''
     global user, basket, cursor
 
     if user:
@@ -900,6 +926,11 @@ def logout():
 
 
 def login(userType): #cid, name, address, pwd)
+    '''
+    This method handels the login menu. It is passed the userType. If the user
+    is a customer, it gives them to option to log in, sign up or exit. If the
+    user is an agent this method only gives them the option to log in.
+    '''
     global user
 
     if userType == 1:
@@ -927,6 +958,10 @@ def login(userType): #cid, name, address, pwd)
 
 
 def agentLogin():
+    '''
+    This method allows agents to login, by verifiyng their username and password
+    are in the database.
+    '''
     global user, cursor
 
     print()
@@ -946,6 +981,11 @@ def agentLogin():
         user = Agent(rows[0][0], rows[0][1], rows[0][2])
 
 def customerLogIn(option):
+    '''
+    This method allows customers to either sign up and create an account or
+    to log in to thier pre existing account. This is determined by which option
+    they selected in the login, menu screen.
+    '''
     global user
 
     print()
@@ -988,6 +1028,11 @@ def sPrint (message):
     print()
 
 def customerMenu():
+    '''
+    This method deals with the implimentation of the customer menu. It allows
+    them to search for a product using keywords, create an order from their
+    basket. Generate a list from all of thier previous orders. Or to log off.
+    '''
     global user
     global basket
     MENU, SEARCH, ORDER, LIST, LOGOFF = range(0,5)
@@ -1035,6 +1080,10 @@ def customerMenu():
 
 
 def agentMenu():
+    '''
+    This method impliments the agent menu, it allows agents to setup a delivery,
+    update a delivery, add items to stock, or to log off.
+    '''
     global user
     MENU, SETUP, UPDATE, ADD, LOGOFF = range(0,5)
     curMode = MENU
@@ -1046,17 +1095,16 @@ def agentMenu():
                 sPrint("Invalid mode. Please try again.")
                 curMode=MENU
         elif curMode == SETUP:
-            #TODO: add the setup function call here
+
             setupDeliveries()
             curMode = MENU
         elif curMode == UPDATE:
-            #TODO: Add update function call here
+
             updateDelivery()
             curMode = MENU
         elif curMode == ADD:
-            #TODO:  add the add function
+
             addtoStock()
-            # checkCarries()
             curMode = MENU
         elif curMode == LOGOFF:
             logout()
@@ -1064,6 +1112,11 @@ def agentMenu():
     sPrint("Returning to Main Menu...")
 
 def loginScreen():
+    '''
+    This method impliments the original log in screen. It allows users to select
+    whether they want to login as a customer, to login as an agent, or to quit
+    the program.
+    '''
     global user
     MENU, CUSTOMER, AGENT, QUIT = range(0,4)
     curMode = MENU
@@ -1111,7 +1164,10 @@ def loginScreen():
 
 def listorder():
     '''
-    List orders. The customer should be able to see all his/her orders; the listing should include for each order, the order id, order date, the number of products ordered and the total price; the orders should be listed in a sorted order with more recent orders listed first. If there are more than 5 orders, only 5 would be shown and the user would be given an option to see more but again 5 at a time. The user should be able to select an order and see more detail of the order including delivery information such as tracking number, pick up and drop off times, the address to be delivered, and a listing of the products in the order, which will include for each product the store id, the store name, the product id, the product name, quantity, unit and unit price.
+    This method allows customers to list thier orders, it provides them with
+    a summary of thier orders made (sorted by date) and allows them to see more
+    details about an order if they choose. It also has scrolling implimented if
+    the user has more than 5 orders.
     '''
     global connection, cursor, user
     temp = user.username
@@ -1197,23 +1253,31 @@ def listorder():
     sPrint("")
 
 def get_total_price(oid):
-        cursor.execute('''
-        SELECT ol.qty, ol.uprice
-        FROM olines ol
-        WHERE ol.oid = ?
-        '''
-        ,[oid])
-        results = cursor.fetchall()
-        if len(results)==0:
-            return 0
-        total=0
-        for r in results:
-            total+= (r[0]*r[1])
-        return total
+    '''
+    This method determines the total price of a specific order, and takes into
+    account the quantity ordered.
+    '''
+    cursor.execute('''
+    SELECT ol.qty, ol.uprice
+    FROM olines ol
+    WHERE ol.oid = ?
+    '''
+    ,[oid])
+    results = cursor.fetchall()
+    if len(results)==0:
+        return 0
+    total=0
+    for r in results:
+        total+= (r[0]*r[1])
+    return total
 
 
 def moreInfoListOrder(oid):
-    '''The user should be able to select an order and see more detail of the order including delivery information such as tracking number, pick up and drop off times, the address to be delivered, and a listing of the products in the order, which will include for each product the store id, the store name, the product id, the product name, quantity, unit and unit price.
+    '''
+    This method provides more information about a specific order. Including its
+    tracking information (if it has been set yet), the name of the stores and
+    products involved in the order, and the quantity and price of all items in
+    the order.
     '''
     global cursor
 
@@ -1263,11 +1327,14 @@ def moreInfoListOrder(oid):
         print(LAYOUT.format(*rows2[i]))
 
 def main():
-    setup_test() #setup()
+    '''
+    The main function, calls setup, then optionally calls define_tables and
+    insert_data for testing purposes, and then calls the loginScreen.
+    '''
+    setup()
     define_tables()
     insert_data()
     loginScreen()
-    #more_info("p120")
 
 if __name__=="__main__":
     main()
