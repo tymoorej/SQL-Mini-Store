@@ -519,6 +519,7 @@ def more_info(pid):
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
     WHERE c.pid=? AND c.qty>0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
+    ORDER BY c.uprice
      '''
     ,[pid])
     rows=cursor.fetchall()
@@ -538,6 +539,7 @@ def more_info(pid):
     FROM (carries c, orders o) LEFT OUTER JOIN olines ol using (sid,pid,oid)
     WHERE c.pid=? AND c.qty=0 and date(o.odate, '+7 day') >= date('now')
     GROUP BY c.sid, c.qty, c.uprice
+    ORDER BY c.uprice
      '''
     ,[pid])
     rows2=cursor.fetchall()
@@ -658,6 +660,8 @@ def placeOrder():
     """orders(oid, cid, odate, address) olines(oid, sid, pid, qty, uprice)"""
     cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
+    connection.commit()
+    checkOrders()
 
 #### MARK: Agent options
 # orders(oid, cid, odate, address)
