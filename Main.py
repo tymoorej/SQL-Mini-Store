@@ -1332,8 +1332,8 @@ def main():
     insert_data for testing purposes, and then calls the loginScreen.
     '''
     setup()
-    define_tables()
-    insert_data()
+    # define_tables()
+    # insert_data()
     loginScreen()
 
 if __name__=="__main__":
