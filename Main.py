@@ -1190,8 +1190,12 @@ def moreInfoListOrder(oid):
     '''The user should be able to select an order and see more detail of the order including delivery information such as tracking number, pick up and drop off times, the address to be delivered, and a listing of the products in the order, which will include for each product the store id, the store name, the product id, the product name, quantity, unit and unit price.
     '''
     global cursor
-    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20}"
-    print(LAYOUT.format("Tracking #","Pick up Time","Drop off Time","Address"))
+
+    print()
+    print()
+    print()
+
+
 
     cursor.execute('''
     SELECT d.trackingNo, d.pickUpTime, d.dropOffTime,o.address
@@ -1199,16 +1203,9 @@ def moreInfoListOrder(oid):
     WHERE d.oid = o.oid and o.oid=?
     '''
     ,[oid])
-    if len(oid)==0:
-        print('Waiting on an Agent')
-    else:
-        rows1 = cursor.fetchall()
-        for i in range(len(rows1)):
-            print(LAYOUT.format(*rows1[i]))
 
+    rows1 = cursor.fetchall()
 
-    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:30} {!s:20} {!s:20} {!s:20}"
-    print(LAYOUT.format("Store ID","Store Name","Product ID",'product name',"Quantity", 'Unit', 'Unit Price'))
     cursor.execute('''
     SELECT ol.sid, stores.name, ol.pid, p.name, ol.qty, p.unit, ol.uprice
     FROM products p, olines ol, stores
@@ -1217,6 +1214,25 @@ def moreInfoListOrder(oid):
     ,[oid])
     rows2 = cursor.fetchall()
 
+
+
+
+    if len(rows1)==0 and len(rows2)>0:
+        print()
+        print('Waiting on an Agent to confirm delivery information')
+        print()
+    else:
+        LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20}"
+        print(LAYOUT.format("Tracking #","Pick up Time","Drop off Time","Address"))
+        for i in range(len(rows1)):
+            print(LAYOUT.format(*rows1[i]))
+
+
+    print()
+    print()
+
+    LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:30} {!s:20} {!s:20} {!s:20}"
+    print(LAYOUT.format("Store ID","Store Name","Product ID",'product name',"Quantity", 'Unit', 'Unit Price'))
     for i in range(len(rows2)):
         print(LAYOUT.format(*rows2[i]))
 
