@@ -661,7 +661,7 @@ def placeOrder():
     cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
     connection.commit()
-    checkOrders()
+    # checkOrders()
 
 #### MARK: Agent options
 # orders(oid, cid, odate, address)
@@ -878,7 +878,7 @@ def addtoStock():
                                 SET uprice = ?
                                 WHERE sid=? AND pid=?""" , [addPrice,sid,pid])
             elif option == 3:
-                checkCarries()
+                # checkCarries()
                 break
         connection.commit()
 
@@ -1112,13 +1112,16 @@ def listorder():
     global connection, cursor
     temp = user.username
     cursor.execute('''
-    SELECT o.oid, o.odate, COUNT(ol.pid), SUM(ol.uprice)
+    SELECT o.oid, o.odate, COUNT(DISTINCT ol.pid)
     FROM orders o, olines ol
     WHERE o.oid = ol.oid AND o.cid=?
     GROUP BY o.oid, o.odate
     ORDER BY o.odate
      ''',[temp])
     results=cursor.fetchall()
+
+    for i in range(len(results)):
+        results[i]=results[i]+(get_total_price(results[i][0]),)
 
     sPrint("")
 
@@ -1188,6 +1191,21 @@ def listorder():
 
 
         sPrint("")
+
+def get_total_price(oid):
+        cursor.execute('''
+        SELECT ol.qty, ol.uprice
+        FROM olines ol
+        WHERE ol.oid = ?
+        '''
+        ,[oid])
+        results = cursor.fetchall()
+        if len(results)==0:
+            return 0
+        total=0
+        for r in results:
+            total+= (r[0]*r[1])
+        return total
 
 
 def moreInfoListOrder(oid):
