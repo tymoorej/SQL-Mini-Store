@@ -656,6 +656,8 @@ def placeOrder():
     """orders(oid, cid, odate, address) olines(oid, sid, pid, qty, uprice)"""
     cursor.execute("INSERT INTO orders VALUES (?,?,?,?)",(uOrder,user.username,datetime.today(),user.address)),
     cursor.executemany("INSERT INTO olines VALUES (?,?,?,?,?)",order),
+    connection.commit()
+    checkOrders()
 
 #### MARK: Agent options
 # orders(oid, cid, odate, address)
@@ -1106,7 +1108,7 @@ def listorder():
     global connection, cursor
     temp = user.username
     cursor.execute('''
-    SELECT o.oid, o.odate, ol.qty, COUNT(ol.pid), SUM(ol.uprice)
+    SELECT o.oid, o.odate, COUNT(ol.pid), SUM(ol.uprice)
     FROM orders o, olines ol
     WHERE o.oid = ol.oid AND o.cid=?
     GROUP BY o.oid, o.odate, ol.qty
@@ -1189,10 +1191,11 @@ def moreInfoListOrder(oid):
     '''
     LAYOUT = "{!s:20} {!s:20} {!s:20} {!s:20}"
     print(LAYOUT.format("Tracking #","Pick up Time","Drop off Time","Address"))
+
     cursor.execute('''
-    SELECT d.trackingNo, d.pickUpTime, d.dropOffTime,o.address
-    FROM products p, olines ol, stores, deliveries d, orders o
-    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid, and d.oid = o.oid and o.oid = ?
+    SELECT d.trackingNo, d.pickUpTime, d.dropOffTime, o.address
+    FROM deliveries d, orders o
+    WHERE d.oid = o.oid and o.oid = ?
     ''',[oid])
     rows1 = cursor.fetchall()
 
@@ -1203,7 +1206,7 @@ def moreInfoListOrder(oid):
     cursor.execute('''
     SELECT ol.sid, stores.name, ol.pid, p.name, ol.qty, p.unit, ol.uprice
     FROM products p, olines ol, stores, deliveries d, orders o
-    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid, and d.oid = o.oid and o.oid = ?
+    WHERE p.pid = ol.pid and stores.sid = ol.sid and ol.sid = stores.sid and d.oid = ol.oid and d.oid = o.oid and o.oid = ?
     ''',[oid])
     rows2 = cursor.fetchall()
 
