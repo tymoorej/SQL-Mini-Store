@@ -12,14 +12,24 @@ uOrder = 1
 uDelivery = 1
 
 class Customer(object):
+    '''
+    The customer class, this class contains the customers username and password
+    '''
     def __init__(self, username, password):
         self.password = password
         self.username = username
 class Agent(Customer):
+    '''
+    The agent class. This class contains the agents, username, name, and password
+    '''
     def __init__(self, username, name, password):
         super().__init__(username, password)
         self.name = name
 class RCustomer(Customer):
+    '''
+    The regular customer class, this class contains the username, name, address,
+    and password of a customer.
+    '''
     def __init__(self, username, name, address, password):
         super().__init__(username, password)
         self.name = name
